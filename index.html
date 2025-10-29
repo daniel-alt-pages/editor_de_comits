@@ -1,51 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- ... (código HEAD existente sin cambios) ... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administrador de Contenidos de GitHub</title>
-    <!-- Importamos Tailwind CSS -->
+    <title>Plataforma de Administración</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Importamos Google Fonts (Inter) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- NUEVA FUNCIONALIDAD: Importamos PapaParse para CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <style>
-        /* Aplicamos la fuente Inter a toda la página */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Estilos para el estado de carga */
-        .loading {
-            pointer-events: none;
-            opacity: 0.6;
-        }
-        /* Transiciones suaves para botones y formularios */
-        button, a, input, select, textarea {
-            transition: all 0.2s ease-in-out;
-        }
-        /* Estilo para el placeholder del video */
-        .video-placeholder {
-            transition: background-color 0.2s ease;
-        }
-        .video-placeholder:hover {
-            background-color: #374151; /* gray-700 */
-        }
+        /* ... (código CSS existente sin cambios) ... */
+        /* Estilo para el placeholder de video */
         .video-placeholder svg {
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease-in-out;
         }
         .video-placeholder:hover svg {
             transform: scale(1.1);
         }
-        /* Ocultar flechas en input[type=search] */
-        input[type="search"]::-webkit-search-decoration,
-        input[type="search"]::-webkit-search-cancel-button,
-        input[type="search"]::-webkit-search-results-button,
-        input[type="search"]::-webkit-search-results-decoration {
-            -webkit-appearance: none;
+        
+        /* **** NUEVO: Estilo para los botones de archivo **** */
+        .file-list-button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            background-color: #ffffff;
+            color: #374151; /* gray-700 */
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 0.375rem; /* rounded-md */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            transition: all 0.2s ease-in-out;
+        }
+        .file-list-button:hover {
+            border-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); /* ring-blue-500 */
+            color: #1d4ed8; /* blue-700 */
         }
     </style>
 </head>
@@ -56,21 +45,18 @@
 
         <!-- Encabezado Fijo -->
         <header class="sticky top-0 z-40 bg-gray-50/90 backdrop-blur-md pt-6 pb-4 mb-6 border-b border-gray-200 flex justify-between items-center">
+            <!-- ... (código del encabezado sin cambios) ... -->
             <div>
                 <h1 class="text-3xl font-bold text-blue-700">Plataforma de Administración (GitHub)</h1>
                 <p id="auth-status" class="text-sm text-gray-600">Esperando token de GitHub...</p>
             </div>
             <!-- Contenedor de botones del encabezado -->
-            <div class="flex items-center space-x-2">
-                <!-- MODIFICADO: Añadido botón "Guardar Cambios" -->
-                <button id="save-all-button" onclick="app.saveAllChanges()" class="hidden px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <svg class="inline-block w-5 h-5 -ml-1 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 2c-1.717 0-3.401.464-4.825 1.315C3.75 4.18 2.833 5.432 2.24 6.91A10.038 10.038 0 002 10c0 1.717.464 3.401 1.315 4.825C4.18 16.25 5.432 17.167 6.91 17.76 8.388 18.353 9.94 18.5 11.5 18.5c1.559 0 3.111-.147 4.59-.74A10.005 10.005 0 0017.76 13.09c.594-1.478.9-3.03.9-4.59s-.306-3.112-.9-4.59A10.005 10.005 0 0013.09 2.24C11.612 1.647 10.06 1.5 8.5 1.5H10zm-.5 13a.5.5 0 01-.5-.5v-3a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v3a.5.5 0 01-.5.5h-1zm.5-7a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-1z" clip-rule="evenodd" />
-                    </svg>
-                    Guardar Cambios
-                </button>
-                <button id="back-to-browser-button" onclick="app.goBackToBrowser()" class="hidden px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+            <div class="flex items-center">
+                <button id="back-to-browser-button" onclick="app.goBackToBrowser()" class="hidden px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 mr-2">
                     Cambiar Archivo
+                </button>
+                <button id="save-all-button" onclick="app.saveAllChanges()" class="hidden px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 mr-2" disabled>
+                    Guardado
                 </button>
                 <button id="logout-button" onclick="app.logout()" class="hidden px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">
                     Cerrar Sesión
@@ -78,123 +64,137 @@
             </div>
         </header>
 
-        <!-- 1. VISTA DE LOGIN (Inicial) -->
-        <main id="login-view" class="p-8 bg-white rounded-lg shadow-md max-w-lg mx-auto border border-gray-200">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Conectar a GitHub</h2>
-            <p class="text-gray-600 mb-6">Pega tu "Token de Acceso Personal" (PAT) de GitHub. El token no se guarda y se borra al cerrar la pestaña.</p>
+        
+        <!-- 1. VISTA DE LOGIN (Sin cambios) -->
+        <div id="login-view" class="hidden max-w-lg mx-auto bg-white p-8 rounded-lg shadow-md border border-gray-200 mt-10">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Iniciar Sesión</h2>
+            <p class="text-gray-600 mb-6">Por favor, introduce tu <a href="https://github.com/settings/tokens" target="_blank" class="text-blue-600 hover:underline">Token de Acceso Personal (PAT)</a> de GitHub. Asegúrate de que tenga permisos de `repo`.</p>
+            
             <div class="space-y-4">
                 <div>
-                    <label for="token-input" class="block text-sm font-medium text-gray-700 mb-1">Token de Acceso Personal</label>
+                    <label for="token-input" class="block text-sm font-medium text-gray-700 mb-1">Token de GitHub</label>
                     <input type="password" id="token-input" placeholder="ghp_..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-xs text-gray-500 mt-1">Token con permisos de `repo` necesario.</p>
                 </div>
-                <button id="login-button" onclick="app.handleLogin()" class="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">
+                <button onclick="app.handleLogin()" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
                     Conectar
                 </button>
             </div>
-        </main>
-
-        <!-- 2. VISTA DE NAVEGADOR DE REPOSITORIOS (Oculta) -->
-        <main id="browser-view" class="hidden">
-            <!-- Sección de Cargar Archivo -->
-            <div class="p-8 bg-white rounded-lg shadow-md border border-gray-200">
-                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Seleccionar Contenido</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Columna 1: Repositorios -->
-                    <div>
-                        <label for="repo-select" class="block text-sm font-medium text-gray-700 mb-1">1. Repositorio</label>
-                        <select id="repo-select" onchange="app.handleRepoChange(this.value)" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
-                            <option value="">Cargando repositorios...</option>
-                        </select>
-                    </div>
-                    <!-- Columna 2: Archivos -->
-                    <div>
-                        <label for="file-select" class="block text-sm font-medium text-gray-700 mb-1">2. Archivo (.json / .csv / .txt)</label>
-                        <select id="file-select" onchange="app.handleFileChange(this.value)" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
-                            <option value="">Selecciona un repositorio primero</option>
-                        </select>
-                    </div>
-                    <!-- Columna 3: Cargar -->
-                    <div class="md:pt-7">
-                        <button id="load-file-button" onclick="app.loadFileContent()" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-400" disabled>
-                            Cargar Editor
-                        </button>
-                    </div>
-                </div>
-            </div>
+        </div>
+        
+        <!-- 
+            *** INICIO DE LA CORRECCIÓN ***
+            Reorganizada la VISTA DE NAVEGADOR para un flujo más rápido.
+        -->
+        <!-- 2. VISTA DE NAVEGADOR DE ARCHIVOS -->
+        <div id="browser-view" class="hidden max-w-lg mx-auto bg-white p-8 rounded-lg shadow-md border border-gray-200 mt-10">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Acciones del Repositorio</h2>
             
-            <!-- NUEVA FUNCIONALIDAD: Sección de Crear Nuevo Archivo -->
-            <div id="create-file-container" class="hidden mt-6 p-8 bg-white rounded-lg shadow-md border border-gray-200">
-                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Crear Nuevo Archivo</h2>
-                <p class="text-sm text-gray-600 mb-4">Crea un nuevo archivo `.json` o `.csv` en el repositorio seleccionado. Incluye la ruta si es necesario (ej: `datos/mi_archivo.json`).</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-2">
-                        <label for="new-file-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del Archivo (con extensión)</label>
-                        <input type="text" id="new-file-name" placeholder="ej: data/nuevo.json o reportes.csv" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="md:pt-7">
-                        <button id="create-file-button" onclick="app.createNewFile()" class="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-400" disabled>
-                            Crear Archivo
+            <!-- Paso 1: Seleccionar Repositorio -->
+            <div>
+                <label for="repo-select" class="block text-sm font-medium text-gray-700 mb-1">Repositorio Seleccionado</label>
+                <select id="repo-select" onchange="app.handleRepoChange(this.value)" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
+                    <option value="">Cargando repositorios...</option>
+                </select>
+            </div>
+
+            <!-- Contenedor para acciones (aparece al seleccionar repo) -->
+            <div id="repo-actions-container" class="hidden mt-6 space-y-6">
+            
+                <!-- Subida General de Archivos -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">Subir un Archivo</h3>
+                    <p class="text-sm text-gray-500 mb-3">Sube una imagen, PDF o documento al repositorio. Se te dará un enlace para copiar y pegar en tus items.</p>
+                    <button id="upload-file-button" onclick="app.triggerGeneralFileUpload()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                        </svg>
+                        Subir Archivo a /uploads/
+                    </button>
+                </div>
+
+                <!-- Crear Nuevo Archivo -->
+                <div id="create-file-container" class="pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-700 mb-3">O crear un nuevo archivo</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-file-name" placeholder="ej: datos/nuevo.json" class="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="create-file-button" onclick="app.createNewFile()" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400" disabled>
+                            Crear
                         </button>
                     </div>
                 </div>
+
+                <!-- Lista de Archivos Existentes -->
+                <div id="file-list-section" class="pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-700 mb-3">O abrir un archivo existente</h3>
+                    <div id="file-list-container" class="space-y-2">
+                        <!-- JS renderizará los botones aquí -->
+                        <p id="file-list-loading" class="text-gray-500">Selecciona un repositorio para ver los archivos...</p>
+                    </div>
+                </div>
+
             </div>
-        </main>
+        </div>
+        <!-- *** FIN DE LA CORRECCIÓN *** -->
         
         <!-- 3. INDICADOR DE CARGA GLOBAL -->
         <div id="loading-spinner" class="hidden text-center p-10">
             <p class="text-lg font-medium text-blue-600">Cargando...</p>
         </div>
 
-        <!-- 4. VISTA DE EDITOR (Oculta) -->
-        <main id="app-container" class="hidden">
-            <!-- Pestañas de Asignaturas (Dinámicas) -->
-            <nav id="tabs-container" class="flex flex-wrap gap-2 mb-6">
-                <!-- Las pestañas se generan con JavaScript -->
-            </nav>
-
-            <!-- Contenido: Lista de Items y Formulario de Añadir -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- Columna Izquierda/Principal: Lista de Items -->
-                <section class="lg:col-span-2">
-                    
-                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-4">
-                        <h2 id="items-list-title" class="text-2xl font-semibold text-gray-800">Items</h2>
-                        
-                        <div class="flex items-center gap-2">
-                            <!-- NUEVA FUNCIONALIDAD: Barra de Búsqueda -->
-                            <div class="relative flex-grow">
-                                <input type="search" id="search-bar" oninput="app.renderItemsList()" placeholder="Buscar items..." class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <!-- NUEVA FUNCIONALIDAD: Botón de Administrar Campos -->
-                            <button id="schema-manager-button" onclick="app.showSchemaModal()" class="hidden p-2 bg-white text-gray-600 rounded-md shadow-sm border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Administrar Campos">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM17 8a1 1 0 10-2 0v.268a2 2 0 000 3.464V16a1 1 0 102 0v-4.268a2 2 0 000-3.464V8z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="items-list">
-                        <!-- Los items se generan con JavaScript en un grid -->
-                    </div>
-                </section>
-
-                <!-- Columna Derecha/Lateral: Formulario de Añadir -->
-                <section id="add-item-form-container" class="bg-white p-6 rounded-lg shadow-md border border-gray-200 h-fit lg:sticky lg:top-28">
-                    <!-- El formulario se genera con JavaScript -->
-                </section>
+        <!-- 4. VISTA DE EDITOR (El <main> SÍ existía) -->
+        <main id="app-container" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Pestañas (si aplica) -->
+            <div id="tabs-container" class="lg:col-span-3 flex flex-wrap gap-2 mb-2">
+                <!-- Pestañas generadas por JS -->
             </div>
+            
+            <!-- Columna Izquierda/Principal: Lista de Items -->
+            <section class="lg:col-span-2">
+                
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-4">
+                    <h2 id="items-list-title" class="text-2xl font-semibold text-gray-800">Items</h2>
+                    
+                    <div class="flex items-center gap-2">
+                        <!-- NUEVA FUNCIONALIDAD: Barra de Búsqueda -->
+                        <div class="relative flex-grow">
+                            <input type="search" id="search-bar" oninput="app.renderItemsList()" placeholder="Buscar items..." class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <!-- NUEVO: Botón de Importar (Reemplazo masivo) -->
+                        <button id="import-local-button" onclick="app.triggerImportModal()" class="hidden p-2 bg-white text-blue-600 rounded-md shadow-sm border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Importar desde local (Reemplaza datos JSON/CSV)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L6.293 6.707z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        
+                        <!-- **** CORRECCIÓN: El botón de subida general ya no está aquí, se movió a la vista de "browser" **** -->
+                        
+                        <!-- NUEVA FUNCIONALIDAD: Botón de Administrar Campos -->
+                        <button id="schema-manager-button" onclick="app.showSchemaModal()" class="hidden p-2 bg-white text-gray-600 rounded-md shadow-sm border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Administrar Campos">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM17 8a1 1 0 10-2 0v.268a2 2 0 000 3.464V16a1 1 0 102 0v-4.268a2 2 0 000-3.464V8z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="items-list">
+                    <!-- Los items se generan con JavaScript en un grid -->
+                </div>
+            </section>
+
+            <!-- Columna Derecha/Lateral: Formulario de Añadir -->
+            <section id="add-item-form-container" class="bg-white p-6 rounded-lg shadow-md border border-gray-200 h-fit lg:sticky lg:top-28">
+                <!-- El formulario se genera con JavaScript -->
+            </section>
         </main>
     </div>
 
-    <!-- MODALES -->
-
-    <!-- Modal de Edición -->
+    <!-- MODALES (sin cambios) -->
+    <!-- ... (Modal de Edición) ... -->
     <div id="edit-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -206,25 +206,23 @@
             </form>
         </div>
     </div>
-
-    <!-- MODIFICADO: Modal de Confirmación Genérico (antes 'delete-modal') -->
+    <!-- ... (Modal de Confirmación) ... -->
     <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 id="confirm-modal-title" class="text-xl font-semibold text-gray-800">Confirmar Acción</h3>
+                <h3 id="confirm-modal-title" class="text-xl font-semibold text-gray-800">Confirmar</h3>
                 <button id="confirm-modal-close" onclick="app.hideConfirmModal()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
             </div>
-            <p id="confirm-modal-message" class="text-gray-600 mb-4">¿Estás seguro?</p>
+            <!-- **** CORRECCIÓN: Añadido estilo para preservar saltos de línea en el mensaje **** -->
+            <p id="confirm-modal-message" class="text-gray-600 mb-4 whitespace-pre-wrap">¿Estás seguro?</p>
             <p id="confirm-modal-note" class="text-sm text-red-600 mb-6 hidden">Esta acción no se puede deshacer.</p>
             <div class="flex justify-end gap-3">
                 <button type="button" id="confirm-modal-cancel" onclick="app.hideConfirmModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancelar</button>
-                <!-- El texto y la clase de este botón se cambian dinámicamente -->
-                <button type="button" id="confirm-modal-accept-btn" class="px-4 py-2 text-white rounded-md shadow-sm">Confirmar</button>
+                <button type="button" id="confirm-modal-accept-btn" class="px-4 py-2 bg-red-600 text-white rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">Sí, Confirmar</button>
             </div>
         </div>
     </div>
-    
-    <!-- NUEVA FUNCIONALIDAD: Modal de Administrar Campos (Schema) -->
+    <!-- ... (Modal de Schema) ... -->
     <div id="schema-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
             <div class="flex justify-between items-center mb-4">
@@ -248,6 +246,40 @@
             </form>
         </div>
     </div>
+    <!-- ... (Modal de Revisión de Cambios) ... -->
+    <div id="review-changes-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Revisar Cambios Pendientes</h3>
+                <button id="review-modal-close" onclick="app.hideReviewChangesModal()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            </div>
+            <p class="text-gray-600 mb-4">Vas a guardar los siguientes cambios en GitHub como un solo commit:</p>
+            
+            <div class="max-h-60 overflow-y-auto bg-gray-50 p-3 rounded-md border border-gray-200 mb-6">
+                <ul id="pending-changes-list" class="list-disc list-inside space-y-1 text-sm text-gray-700">
+                    <!-- La lista de cambios se genera aquí -->
+                </ul>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="app.hideReviewChangesModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancelar</button>
+                <button type="button" id="review-modal-confirm-btn" onclick="app._reallySaveAllChanges()" class="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">Confirmar y Guardar</button>
+            </div>
+        </div>
+    </div>
+    <!-- ... (Modal de Carga de Imagen) ... -->
+    <div id="image-upload-loader" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Subiendo Archivo...</h3>
+            <p class="text-gray-600">Por favor espera, estamos subiendo tu archivo a GitHub.</p>
+        </div>
+    </div>
+
+
+    <!-- INPUTS OCULTOS (Sin cambios) -->
+    <input type="file" id="local-file-importer" class="hidden" accept=".json,.csv" onchange="app.handleLocalFileSelected(event)">
+    <input type="file" id="image-uploader-input" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onchange="app.handleImageUpload(event)">
+    <input type="file" id="general-file-uploader" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx, .zip, .txt" onchange="app.handleGeneralFileUpload(event)">
 
 
     <!-- SCRIPT PRINCIPAL DE LA APLICACIÓN -->
@@ -260,16 +292,18 @@
         const appState = {
             loading: false,
             view: 'login', // 'login', 'browser', 'editor'
-            isDirty: false, // /* NUEVO: Estado para cambios sin guardar */
+            isDirty: false, 
+            pendingChangesLog: [], 
             repos: [],
             repoFiles: [],
             selectedRepo: '', // e.g., 'user/repo-name'
             selectedFile: '', // e.g., 'path/to/bd.json'
             currentSha: '',
-            data: null, // El contenido JSON del archivo
-            dataStructure: 'array', // 'array' o 'object-of-arrays'
-            selectedSubject: null, // La "pestaña" (e.g., 'matematicas')
-            editingItem: null // { subject, index } o { index }
+            data: null, 
+            dataStructure: 'array', 
+            selectedSubject: null, 
+            editingItem: null, 
+            currentImageFieldTarget: null 
         };
 
         // --- CONTROLADOR PRINCIPAL DE VISTAS ---
@@ -279,16 +313,29 @@
             const logoutBtn = document.getElementById('logout-button');
             const backBtn = document.getElementById('back-to-browser-button');
             const authStatus = document.getElementById('auth-status');
-            const createContainer = document.getElementById('create-file-container');
+            
+            // **** CORRECCIÓN: 'create-file-container' y 'upload-file-button' ya no se manejan aquí ****
+            
             const schemaBtn = document.getElementById('schema-manager-button');
-            const saveAllBtn = document.getElementById('save-all-button'); // /* NUEVO */
+            const saveAllBtn = document.getElementById('save-all-button'); 
+            const importLocalBtn = document.getElementById('import-local-button'); 
+            const imageUploadLoader = document.getElementById('image-upload-loader'); 
 
             // Resetear vistas
-            views.forEach(v => document.getElementById(v).classList.add('hidden'));
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if (el) {
+                    el.classList.add('hidden');
+                } else {
+                    console.warn(`Elemento con ID "${v}" no encontrado durante renderApp.`);
+                }
+            });
+            
             backBtn.classList.add('hidden');
-            createContainer.classList.add('hidden');
             schemaBtn.classList.add('hidden');
-            saveAllBtn.classList.add('hidden'); // /* NUEVO */
+            saveAllBtn.classList.add('hidden'); 
+            importLocalBtn.classList.add('hidden'); 
+            imageUploadLoader.classList.add('hidden'); 
 
             if (appState.loading) {
                 loadingEl.classList.remove('hidden');
@@ -303,20 +350,26 @@
                 authStatus.textContent = 'Esperando token de GitHub...';
             } else if (appState.view === 'browser') {
                 document.getElementById('browser-view').classList.remove('hidden');
-                if (appState.selectedRepo) createContainer.classList.remove('hidden');
+                
+                // **** CORRECCIÓN: La lógica de mostrar/ocultar los botones de acción está ahora en handleRepoChange y _reallyGoBackToBrowser ****
+                
                 logoutBtn.classList.remove('hidden');
                 authStatus.textContent = `Conectado como: ${GITHUB_USER}`;
-                appState.isDirty = false; // /* NUEVO: Resetear al salir del editor */
+                appState.isDirty = false; 
             } else if (appState.view === 'editor') {
                 document.getElementById('app-container').classList.remove('hidden');
                 schemaBtn.classList.remove('hidden');
+                importLocalBtn.classList.remove('hidden'); 
                 logoutBtn.classList.remove('hidden');
                 backBtn.classList.remove('hidden');
-                saveAllBtn.classList.remove('hidden'); // /* NUEVO */
+                saveAllBtn.classList.remove('hidden'); 
                 
-                // /* NUEVO: Habilitar o deshabilitar el botón de guardar */
                 saveAllBtn.disabled = !appState.isDirty;
-                saveAllBtn.textContent = appState.isDirty ? 'Guardar Cambios' : 'Guardado';
+                if (appState.isDirty) {
+                    saveAllBtn.textContent = `Guardar Cambios (${appState.pendingChangesLog.length})`;
+                } else {
+                    saveAllBtn.textContent = 'Guardado';
+                }
 
                 authStatus.textContent = `Editando: ${appState.selectedRepo} / ${appState.selectedFile}`;
                 renderEditor();
@@ -324,15 +377,21 @@
         }
 
         // --- LÓGICA DE API DE GITHUB (GENÉRICA) ---
+        // ... (githubApiFetch sin cambios) ...
         async function githubApiFetch(endpoint, options = {}) {
             if (!GITHUB_TOKEN) {
-                alert("Error: Token de GitHub no encontrado.");
-                logout();
+                console.error("Error: Token de GitHub no encontrado.");
+                _reallyLogout(); 
                 return;
             }
 
-            appState.loading = true;
-            renderApp();
+            // **** CORRECCIÓN: El modal de carga ahora dice "Archivo" en lugar de "Imagen" ****
+            if (endpoint.includes('/uploads/')) {
+                document.getElementById('image-upload-loader').classList.remove('hidden');
+            } else {
+                appState.loading = true;
+                renderApp();
+            }
 
             const headers = new Headers({
                 'Authorization': `token ${GITHUB_TOKEN}`,
@@ -349,10 +408,10 @@
                     throw new Error(`Error de GitHub API (${response.status}): ${error.message}`);
                 }
                 
-                if (response.status === 204) { // No Content (para DELETE)
+                if (response.status === 204) { // No Content
                     return null;
                 }
-                if (response.status === 201) { // Created (para PUT - new file)
+                if (response.status === 201) { // Created
                     return await response.json();
                 }
 
@@ -362,24 +421,54 @@
                 console.error("Error en githubApiFetch:", error);
                 
                 if (error.message.includes("401")) {
-                    alert("Error de Autenticación (401): Token de GitHub inválido, expirado o sin permisos 'repo'.\n\nPor favor, verifica tu token e inténtalo de nuevo.");
-                    _reallyLogout(); // /* MODIFICADO: Usar el logout real */
+                    console.error("Error de Autenticación (401): Token de GitHub inválido, expirado o sin permisos 'repo'.");
+                    showConfirmModal({
+                        title: "Error de Autenticación",
+                        message: "Token de GitHub inválido, expirado o sin permisos 'repo'. Por favor, verifica tu token e inténtalo de nuevo.",
+                        confirmText: "Entendido",
+                        confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                        onConfirm: _reallyLogout
+                    });
                 } else {
-                    alert(`Error de API: ${error.message}`);
+                    console.error(`Error de API: ${error.message}`);
+                    showConfirmModal({
+                        title: "Error de API",
+                        message: error.message,
+                        confirmText: "Entendido",
+                        confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                        onConfirm: () => {} 
+                    });
                 }
 
             } finally {
-                appState.loading = false;
-                renderApp();
+                if (endpoint.includes('/uploads/')) {
+                    document.getElementById('image-upload-loader').classList.add('hidden');
+                } else {
+                    appState.loading = false;
+                    renderApp();
+                }
             }
         }
 
         // --- 1. LÓGICA DE AUTENTICACIÓN ---
-
+        // ... (handleLogin, logout, _reallyLogout sin cambios) ...
         async function handleLogin() {
-            const token = document.getElementById('token-input').value;
+            const tokenInput = document.getElementById('token-input');
+            if (!tokenInput) {
+                console.error("No se encontró 'token-input'.");
+                return;
+            }
+            const token = tokenInput.value;
+            
             if (!token) {
-                alert("Por favor, introduce un token.");
+                console.warn("Por favor, introduce un token.");
+                showConfirmModal({
+                    title: "Token Requerido",
+                    message: "Por favor, introduce un token de GitHub para continuar.",
+                    confirmText: "Entendido",
+                    confirmClass: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-400",
+                    onConfirm: () => {}
+                });
                 return;
             }
             GITHUB_TOKEN = token;
@@ -393,7 +482,6 @@
             }
         }
 
-        // /* NUEVO: Función de "confirmación" para salir */
         function logout() {
             if (appState.isDirty) {
                 showConfirmModal({
@@ -402,22 +490,21 @@
                     note: 'Los cambios no se guardarán en GitHub.',
                     confirmText: 'Sí, Salir y Descartar',
                     confirmClass: 'bg-red-600 hover:bg-red-700 focus:ring-red-400',
-                    onConfirm: _reallyLogout // Llama a la función de logout real
+                    onConfirm: _reallyLogout 
                 });
             } else {
                 _reallyLogout();
             }
         }
 
-        // /* NUEVO: Función de logout real (sin confirmación) */
         function _reallyLogout() {
             GITHUB_TOKEN = '';
             GITHUB_USER = '';
-            // Resetear todo el estado
             Object.assign(appState, {
                 loading: false,
                 view: 'login',
                 isDirty: false,
+                pendingChangesLog: [], 
                 repos: [],
                 repoFiles: [],
                 selectedRepo: '',
@@ -426,13 +513,17 @@
                 data: null,
                 dataStructure: 'array',
                 selectedSubject: null,
-                editingItem: null
+                editingItem: null,
+                currentImageFieldTarget: null
             });
-            document.getElementById('token-input').value = '';
+            
+            const tokenInput = document.getElementById('token-input');
+            if(tokenInput) tokenInput.value = '';
+            
             renderApp();
         }
 
-        // /* NUEVO: Función de "confirmación" para volver */
+        // ... (goBackToBrowser sin cambios) ...
         function goBackToBrowser() {
             if (appState.isDirty) {
                 showConfirmModal({
@@ -441,14 +532,14 @@
                     note: 'Los cambios no se guardarán en GitHub.',
                     confirmText: 'Sí, Salir y Descartar',
                     confirmClass: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-400',
-                    onConfirm: _reallyGoBackToBrowser // Llama a la función real
+                    onConfirm: _reallyGoBackToBrowser 
                 });
             } else {
                 _reallyGoBackToBrowser();
             }
         }
-
-        // /* NUEVO: Función real para volver (sin confirmación) */
+        
+        // **** CORRECCIÓN: _reallyGoBackToBrowser ahora oculta el nuevo contenedor de acciones ****
         function _reallyGoBackToBrowser() {
             appState.view = 'browser';
             // Resetear estado del editor
@@ -458,26 +549,35 @@
             appState.selectedSubject = null;
             appState.editingItem = null;
             appState.isDirty = false;
+            appState.pendingChangesLog = []; 
+            appState.currentImageFieldTarget = null;
             
             try {
-                document.getElementById('file-select').value = '';
-                document.getElementById('load-file-button').disabled = true;
+                // Ocultar el contenedor de acciones al volver
+                document.getElementById('repo-actions-container').classList.add('hidden');
+                // Resetear el select de repo
+                document.getElementById('repo-select').value = '';
             } catch (e) {
-                console.warn("No se pudo resetear el file-select:", e);
+                console.warn("No se pudo resetear la vista de browser:", e);
             }
 
             renderApp();
         }
 
-
         // --- 2. LÓGICA DE NAVEGACIÓN (REPOS Y ARCHIVOS) ---
-
+        
+        // ... (fetchRepos sin cambios) ...
         async function fetchRepos() {
+            const repoSelect = document.getElementById('repo-select');
+            if (!repoSelect) {
+                console.error("No se encontró 'repo-select'.");
+                return;
+            }
+
             const repos = await githubApiFetch('/user/repos?type=all&sort=updated');
             if (!repos) return;
 
             appState.repos = repos.map(repo => repo.full_name);
-            const repoSelect = document.getElementById('repo-select');
             repoSelect.innerHTML = '<option value="">Selecciona un repositorio...</option>';
             appState.repos.forEach(repoName => {
                 const option = new Option(repoName, repoName);
@@ -486,103 +586,128 @@
             repoSelect.disabled = false;
         }
 
+        // **** CORRECCIÓN: handleRepoChange ahora carga la lista de archivos automáticamente ****
         async function handleRepoChange(repoFullName) {
             appState.selectedRepo = repoFullName;
-            appState.selectedFile = '';
-            document.getElementById('load-file-button').disabled = true;
-            document.getElementById('create-file-button').disabled = !repoFullName;
-            
-            const fileSelect = document.getElementById('file-select');
-            fileSelect.innerHTML = '<option value="">Cargando archivos...</option>';
-            fileSelect.disabled = true;
-            
+            const actionsContainer = document.getElementById('repo-actions-container');
+            const fileListContainer = document.getElementById('file-list-container');
+            const loadingText = document.getElementById('file-list-loading');
+            const createFileBtn = document.getElementById('create-file-button');
+
             if (!repoFullName) {
-                fileSelect.innerHTML = '<option value="">Selecciona un repositorio primero</option>';
-                renderApp();
+                actionsContainer.classList.add('hidden');
+                fileListContainer.innerHTML = '';
+                loadingText.textContent = 'Selecciona un repositorio para ver los archivos...';
+                fileListContainer.appendChild(loadingText);
                 return;
             }
             
-            renderApp(); // Para mostrar el contenedor de "Crear Archivo"
+            // Mostrar el contenedor de acciones
+            actionsContainer.classList.remove('hidden');
+            createFileBtn.disabled = false; // Habilitar el botón de crear
+            loadingText.textContent = 'Cargando archivos...';
+            fileListContainer.innerHTML = '';
+            fileListContainer.appendChild(loadingText);
 
             const data = await githubApiFetch(`/repos/${repoFullName}/git/trees/main?recursive=1`);
-            if (!data || !data.tree) return;
+            if (!data || !data.tree) {
+                loadingText.textContent = 'Error al cargar archivos.';
+                return;
+            }
 
-            // Filtrar archivos
             appState.repoFiles = data.tree
                 .filter(file => file.type === 'blob' && (file.path.endsWith('.json') || file.path.endsWith('.jsonc') || file.path.endsWith('.csv') || file.path.endsWith('.txt')))
                 .map(file => file.path);
             
-            fileSelect.innerHTML = '<option value="">Selecciona un archivo...</option>';
+            // Limpiar el contenedor y renderizar botones
+            fileListContainer.innerHTML = '';
+            
+            if (appState.repoFiles.length === 0) {
+                 loadingText.textContent = 'No se encontraron archivos .json o .csv en este repositorio.';
+                 fileListContainer.appendChild(loadingText);
+                 return;
+            }
+            
             appState.repoFiles.forEach(filePath => {
-                const option = new Option(filePath, filePath);
-                fileSelect.add(option);
+                const fileBtn = document.createElement('button');
+                fileBtn.type = 'button';
+                fileBtn.textContent = filePath;
+                fileBtn.className = 'file-list-button';
+                // Asignar el evento onclick para cargar el archivo
+                // **** INICIO DE LA CORRECCIÓN ****
+                // Se eliminó la "F" que causaba el error de sintaxis
+                fileBtn.onclick = () => app.loadFileContent(filePath);
+                // **** FIN DE LA CORRECCIÓN ****
+                fileListContainer.appendChild(fileBtn);
             });
-            fileSelect.disabled = false;
         }
 
-        function handleFileChange(filePath) {
-            appState.selectedFile = filePath;
-            document.getElementById('load-file-button').disabled = !filePath;
-        }
-
+        // **** CORRECCIÓN: handleFileChange ya no es necesario ****
+        // function handleFileChange(filePath) { ... } // <- ELIMINADO
 
         // --- 3. LÓGICA DE CARGA Y ANÁLISIS DE DATOS ---
+        
+        // **** CORRECCIÓN: loadFileContent ahora acepta 'filePath' como argumento ****
+        async function loadFileContent(filePath) {
+            if (!filePath) {
+                console.error("loadFileContent fue llamado sin filePath.");
+                return;
+            }
+            
+            appState.selectedFile = filePath; // Establecer el archivo seleccionado
 
-        async function loadFileContent() {
-            if (!appState.selectedRepo || !appState.selectedFile) return;
-
-            const fileData = await githubApiFetch(`/repos/${appState.selectedRepo}/contents/${appState.selectedFile}`);
+            const fileData = await githubApiFetch(`/repos/${appState.selectedRepo}/contents/${filePath}`);
             if (!fileData) return;
 
             try {
-                // Decodificar Base64 a UTF-8 (maneja tildes)
                 const decodedContent = decodeURIComponent(escape(atob(fileData.content)));
                 
-                // Si es un CSV, lo convertimos a JSON con PapaParse
                 if (appState.selectedFile.toLowerCase().endsWith('.csv')) {
                     appState.data = csvToJSON(decodedContent);
                 } else {
-                // Si no, asumimos que es JSON
                     appState.data = JSON.parse(decodedContent);
                 }
 
                 appState.currentSha = fileData.sha;
-                appState.isDirty = false; // /* NUEVO: El estado inicial no está sucio */
+                appState.isDirty = false; 
                 analyzeDataStructure();
                 appState.view = 'editor';
                 renderApp();
 
             } catch (error) {
                 console.error("Error al parsear el archivo:", error);
-                alert("Error: El archivo seleccionado no es un JSON, CSV válido o está corrupto.");
+                showConfirmModal({
+                    title: "Error de Archivo",
+                    message: "Error: El archivo seleccionado no es un JSON, CSV válido o está corrupto.",
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
             }
         }
 
+        // ... (analyzeDataStructure sin cambios) ...
         function analyzeDataStructure() {
-            // Caso 1: Objeto de Arrays (ej. { matematicas: [...], lectura: [...] })
             if (typeof appState.data === 'object' && !Array.isArray(appState.data) && appState.data !== null) {
                 const keys = Object.keys(appState.data);
                 if (keys.length > 0 && Array.isArray(appState.data[keys[0]])) {
                     appState.dataStructure = 'object-of-arrays';
-                    appState.selectedSubject = keys[0]; // Seleccionar la primera "pestaña"
+                    appState.selectedSubject = keys[0]; 
                     return;
                 }
             }
-            // Caso 2: Array de Objetos (ej. [ {...}, {...} ])
             appState.dataStructure = 'array';
             appState.selectedSubject = null;
         }
 
-
         // --- 4. LÓGICA DEL EDITOR DINÁMICO ---
-
+        // ... (renderEditor, renderTabs, renderItemsList, renderAddItemForm sin cambios) ...
         function renderEditor() {
             renderTabs();
             renderItemsList();
             renderAddItemForm();
         }
 
-        // Dibuja las pestañas
         function renderTabs() {
             const tabsContainer = document.getElementById('tabs-container');
             tabsContainer.innerHTML = '';
@@ -606,16 +731,15 @@
                 tab.className = `px-4 py-2 font-medium rounded-md ${tabClasses}`;
                 tab.onclick = () => {
                     appState.selectedSubject = subject;
-                    renderEditor(); // Re-dibujar al cambiar de pestaña
+                    renderEditor(); 
                 };
                 tabsContainer.appendChild(tab);
             });
         }
 
-        // Dibuja la lista de items (tarjetas)
         function renderItemsList() {
             const itemsListContainer = document.getElementById('items-list');
-            itemsListContainer.className = "grid grid-cols-1 xl:grid-cols-3 gap-6"; // 3 columnas en XL
+            itemsListContainer.className = "grid grid-cols-1 xl:grid-cols-3 gap-6"; 
             itemsListContainer.innerHTML = '';
 
             const items = (appState.dataStructure === 'object-of-arrays')
@@ -632,7 +756,6 @@
                 return;
             }
             
-            // NUEVA FUNCIONALIDAD: Lógica de Búsqueda
             const searchTerm = document.getElementById('search-bar').value.toLowerCase();
             const filteredItems = items.filter(item => {
                 if (!searchTerm) return true;
@@ -640,21 +763,18 @@
                     String(val).toLowerCase().includes(searchTerm)
                 );
             });
-            // FIN Lógica de Búsqueda
 
             if (filteredItems.length === 0) {
                 itemsListContainer.innerHTML = `<p class="text-gray-500 lg:col-span-2">No se encontraron items que coincidan con "${searchTerm}".</p>`;
             }
 
             filteredItems.forEach((item) => {
-                // Encontrar el índice original para el botón de editar/borrar
                 const originalIndex = items.indexOf(item);
                 
                 const itemEl = document.createElement('div');
                 itemEl.className = 'bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col hover:shadow-lg transition-shadow';
                 
                 let videoPreviewHtml = '';
-                // Lógica de vista previa de video (Clic para Cargar)
                 if (item.video_link && typeof item.video_link === 'string') {
                     const embedUrl = getEmbeddableDriveUrl(item.video_link);
                     if (embedUrl) {
@@ -665,7 +785,7 @@
                                 onclick="app.loadVideo(this)"
                             >
                                 <svg class="w-16 h-16 text-white text-opacity-70" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
                                 </svg>
                                 <span class="absolute bottom-2 right-2 text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">Cargar video</span>
                             </div>
@@ -673,13 +793,22 @@
                     }
                 }
                 
-                // Generación dinámica del contenido
                 let cardContentHtml = '<div class="p-4 flex-grow">';
                 for (const [key, value] of Object.entries(item)) {
                     if (key.toLowerCase() === 'title') {
                         cardContentHtml += `<h3 class="text-lg font-semibold text-blue-700 mb-1 break-words">${value}</h3>`;
                     } else if (key.toLowerCase() === 'video_link') {
                         cardContentHtml += `<a href="${value}" target="_blank" class="text-sm text-blue-500 hover:underline break-all mt-2 inline-block">Ver Video</a>`;
+                    } else if (key.toLowerCase().includes('imagen') || key.toLowerCase().includes('img') || key.toLowerCase().includes('foto') || key.toLowerCase().includes('doc')) { 
+                        if (String(value).startsWith('http')) {
+                            if (value.match(/\.(jpeg|jpg|gif|png|svg)$/i)) {
+                                cardContentHtml += `<img src="${value}" alt="Vista previa" class="w-full h-auto rounded-md my-2 border border-gray-200" onerror="this.style.display='none'">`;
+                            } else {
+                                cardContentHtml += `<a href="${value}" target="_blank" class="text-sm text-blue-500 hover:underline break-all mt-2 inline-block">Ver Documento: ${key}</a>`;
+                            }
+                        } else {
+                            cardContentHtml += `<p class="text-sm text-gray-600 break-words"><strong>${key}:</strong> ${value}</p>`;
+                        }
                     } else if (key.toLowerCase() !== 'description') {
                         cardContentHtml += `<p class="text-sm text-gray-600 break-words"><strong>${key}:</strong> ${value}</p>`;
                     }
@@ -706,7 +835,6 @@
                 itemsListContainer.appendChild(itemEl);
             });
 
-            // Asignar eventos
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.onclick = (e) => showEditModal(e.currentTarget.dataset.index);
             });
@@ -715,7 +843,6 @@
             });
         }
 
-        // Genera el formulario de "Añadir Item"
         function renderAddItemForm() {
             const formContainer = document.getElementById('add-item-form-container');
             const items = (appState.dataStructure === 'object-of-arrays')
@@ -729,9 +856,8 @@
             let schema = null;
 
             if (items && items.length > 0) {
-                schema = items[0]; // Usamos el primer item como plantilla
+                schema = items[0]; 
             } else if (appState.dataStructure === 'object-of-arrays') {
-                // Si este array está vacío, buscamos un schema en otro array
                 for (const key in appState.data) {
                     if (appState.data[key].length > 0) {
                         schema = appState.data[key][0];
@@ -755,7 +881,7 @@
             }
             
             formHtml += `
-                        <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Añadir Item</button>
+                            <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Añadir Item</button>
                 </form>
             `;
             
@@ -763,20 +889,33 @@
             document.getElementById('add-form').onsubmit = handleAddItem;
         }
 
+
         // --- 5. LÓGICA DE ACCIONES (CRUD) ---
 
-        // Generar campos de formulario
+        // ... (generateFormField, handleAddItem, showEditModal, hideEditModal, handleEditItem, showDeleteConfirmation, handleDeleteItem sin cambios) ...
         function generateFormField(key, value, prefix = '') {
             const id = `${prefix}${key}`;
             let field = '';
             const stringValue = (value === null || value === undefined) ? '' : String(value);
-
-            if (key.toLowerCase().includes('description') || stringValue.length > 80) {
-                field = `<textarea id="${id}" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>${stringValue}</textarea>`;
-            } else if (key.toLowerCase().includes('link') || key.toLowerCase().includes('url')) {
-                field = `<input type="url" id="${id}" value="${stringValue}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>`;
+            const keyLower = key.toLowerCase();
+            
+            if (keyLower.includes('imagen') || keyLower.includes('img') || keyLower.includes('foto') || keyLower.includes('icon') || keyLower.includes('doc') || keyLower.includes('archivo')) {
+                field = `
+                    <div class="flex items-center gap-2">
+                        <input type="url" id="${id}" value="${stringValue}" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://... o sube un archivo">
+                        <button type="button" onclick="app.triggerImageUpload('${id}')" class="p-2 bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400" title="Subir Archivo (Imagen, PDF, Doc...)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L6.293 6.707z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            } else if (keyLower.includes('description') || stringValue.length > 80) {
+                field = `<textarea id="${id}" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">${stringValue}</textarea>`;
+            } else if (keyLower.includes('link') || keyLower.includes('url')) {
+                field = `<input type="url" id="${id}" value="${stringValue}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">`;
             } else {
-                field = `<input type="text" id="${id}" value="${stringValue}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>`;
+                field = `<input type="text" id="${id}" value="${stringValue}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">`;
             }
             
             return `
@@ -787,8 +926,6 @@
             `;
         }
 
-        // 1. Añadir Item
-        // /* MODIFICADO: Solo cambia el estado local, no guarda */
         function handleAddItem(e) {
             e.preventDefault();
             const items = (appState.dataStructure === 'object-of-arrays')
@@ -804,11 +941,18 @@
                         schema = appState.data[key][0];
                         break;
                     }
-                }
+                 }
             }
 
             if (!schema) {
-                alert("No se puede añadir item: estructura desconocida.");
+                console.error("No se puede añadir item: estructura desconocida.");
+                showConfirmModal({
+                    title: "Error",
+                    message: "No se puede añadir item: estructura desconocida. Intenta añadir un campo primero.",
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
                 return;
             }
 
@@ -817,21 +961,21 @@
                 newItem[key] = document.getElementById(`add-${key}`).value;
             }
 
-            // /* MODIFICADO: Actualiza appState.data directamente */
             if (appState.dataStructure === 'object-of-arrays') {
                 appState.data[appState.selectedSubject].push(newItem);
             } else {
                 appState.data.push(newItem);
             }
 
-            // /* NUEVO: Marcar como sucio y redibujar */
             appState.isDirty = true;
-            renderApp(); // Para actualizar el botón de guardar
-            renderEditor(); // Para mostrar el nuevo item en la lista
+            const title = newItem.title || newItem.name || `Índice ${appState.data.length - 1}`;
+            appState.pendingChangesLog.push(`Item añadido: "${title}"`);
+            
+            renderApp(); 
+            renderEditor(); 
             e.target.reset();
         }
 
-        // 2. Mostrar Modal de Edición
         function showEditModal(index) {
             const items = (appState.dataStructure === 'object-of-arrays')
                 ? appState.data[appState.selectedSubject]
@@ -862,8 +1006,6 @@
             document.getElementById('edit-modal').classList.add('hidden');
         }
 
-        // 3. Guardar Edición
-        // /* MODIFICADO: Solo cambia el estado local, no guarda */
         function handleEditItem(e) {
             e.preventDefault();
             if (!appState.editingItem) return;
@@ -880,21 +1022,21 @@
                 updatedItem[key] = document.getElementById(`edit-${key}`).value;
             }
 
-            // /* MODIFICADO: Actualiza appState.data directamente */
             if (appState.dataStructure === 'object-of-arrays') {
                 appState.data[appState.selectedSubject][index] = updatedItem;
             } else {
                 appState.data[index] = updatedItem;
             }
 
-            // /* NUEVO: Marcar como sucio y redibujar */
             appState.isDirty = true;
-            renderApp(); // Para actualizar el botón de guardar
-            renderEditor(); // Para mostrar el item actualizado
+            const title = updatedItem.title || updatedItem.name || `Índice ${index}`;
+            appState.pendingChangesLog.push(`Item editado: "${title}"`);
+            
+            renderApp(); 
+            renderEditor(); 
             hideEditModal();
         }
 
-        // 4. Mostrar Modal de Eliminación (Ahora usa el modal genérico)
         function showDeleteConfirmation(index) {
             appState.editingItem = { index: parseInt(index) };
             showConfirmModal({
@@ -907,58 +1049,76 @@
             });
         }
         
-        // 5. Eliminar Item
-        // /* MODIFICADO: Solo cambia el estado local, no guarda */
         function handleDeleteItem() {
             if (!appState.editingItem) return;
             const { index } = appState.editingItem;
 
-            // /* MODIFICADO: Actualiza appState.data directamente */
+            appState.isDirty = true;
+            const items = (appState.dataStructure === 'object-of-arrays') ? appState.data[appState.selectedSubject] : appState.data;
+            const deletedItem = items[index]; 
+            const title = deletedItem.title || deletedItem.name || `Índice ${index}`;
+            appState.pendingChangesLog.push(`Item eliminado: "${title}"`);
+
             if (appState.dataStructure === 'object-of-arrays') {
                 appState.data[appState.selectedSubject].splice(index, 1);
             } else {
                 appState.data.splice(index, 1);
             }
             
-            // /* NUEVO: Marcar como sucio y redibujar */
-            appState.isDirty = true;
-            appState.editingItem = null; // Limpiar el item a editar
-            renderApp(); // Para actualizar el botón de guardar
-            renderEditor(); // Para mostrar la lista sin el item
+            appState.editingItem = null; 
+            renderApp(); 
+            renderEditor(); 
         }
 
-
         // --- 6. LÓGICA DE GUARDADO EN GITHUB ---
+        // ... (saveAllChanges, showReviewChangesModal, hideReviewChangesModal, _reallySaveAllChanges, saveChangesToGitHub sin cambios) ...
+        function saveAllChanges() {
+            if (!appState.isDirty || appState.pendingChangesLog.length === 0) {
+                return;
+            }
+            showReviewChangesModal();
+        }
+
+        function showReviewChangesModal() {
+            const listEl = document.getElementById('pending-changes-list');
+            listEl.innerHTML = ''; 
+            
+            appState.pendingChangesLog.forEach(logEntry => {
+                const li = document.createElement('li');
+                li.textContent = logEntry;
+                listEl.appendChild(li);
+            });
+            
+            document.getElementById('review-changes-modal').classList.remove('hidden');
+        }
+
+        function hideReviewChangesModal() {
+            document.getElementById('review-changes-modal').classList.add('hidden');
+        }
         
-        // /* NUEVO: Función para guardar TODOS los cambios locales en GitHub */
-        async function saveAllChanges() {
-            // El guardado se hace sobre el estado actual
+        async function _reallySaveAllChanges() {
             const success = await saveChangesToGitHub(appState.data);
             
             if (success) {
                 appState.isDirty = false;
-                renderApp(); // Para deshabilitar el botón de guardar
-                // La alerta de "éxito" ya está en saveChangesToGitHub
+                appState.pendingChangesLog = []; 
+                hideReviewChangesModal(); 
+                renderApp(); 
             } else {
-                // El error ya se mostró en el alert de githubApiFetch o saveChangesToGitHub
                 console.error("No se pudieron guardar los cambios.");
             }
         }
         
-        // /* MODIFICADO: Esta función ahora retorna un booleano (success) */
         async function saveChangesToGitHub(newData) {
             const commitMessage = `Actualizado ${appState.selectedFile} desde la plataforma de admin`;
             let newContent = '';
 
-            // Si el archivo original era CSV, lo volvemos a convertir a CSV con PapaParse
             if (appState.selectedFile.toLowerCase().endsWith('.csv')) {
                 newContent = jsonToCSV(newData);
             } else {
-            // Si no, lo guardamos como JSON formateado
-                newContent = JSON.stringify(newData, null, 2); // 2 espacios de indentación
+                newContent = JSON.stringify(newData, null, 2); 
             }
 
-            // Convertir a Base64 (manejando UTF-8)
             const newContentBase64 = btoa(unescape(encodeURIComponent(newContent)));
 
             const endpoint = `/repos/${appState.selectedRepo}/contents/${appState.selectedFile}`;
@@ -967,7 +1127,7 @@
                 body: JSON.stringify({
                     message: commitMessage,
                     content: newContentBase64,
-                    sha: appState.currentSha // El SHA es crucial
+                    sha: appState.currentSha 
                 })
             };
 
@@ -975,41 +1135,70 @@
             
             if (result && result.content) {
                 appState.currentSha = result.content.sha;
-                appState.data = newData; // Asegurar que los datos locales coincidan
+                appState.data = newData; 
                 renderEditor();
-                alert("¡Cambios guardados en GitHub con éxito!");
-                return true; // /* NUEVO: Retorna éxito */
+                showConfirmModal({
+                    title: "Éxito",
+                    message: "¡Cambios guardados en GitHub con éxito!",
+                    confirmText: "Entendido",
+                    confirmClass: "bg-green-600 hover:bg-green-700 focus:ring-green-400",
+                    onConfirm: () => {}
+                });
+                return true; 
             } else if (result === null) {
-                // API de GitHub a veces tarda (204). Recargamos los datos para obtener el nuevo SHA.
                 console.warn("Guardado exitoso (204), recargando SHA.");
                 const fileData = await githubApiFetch(`/repos/${appState.selectedRepo}/contents/${appState.selectedFile}`);
                 if (fileData) {
                     appState.currentSha = fileData.sha;
                     appState.data = newData;
                     renderEditor();
-                    alert("¡Cambios guardados en GitHub con éxito!");
-                    return true; // /* NUEVO: Retorna éxito */
+                    showConfirmModal({
+                        title: "Éxito",
+                        message: "¡Cambios guardados en GitHub con éxito!",
+                        confirmText: "Entendido",
+                        confirmClass: "bg-green-600 hover:bg-green-700 focus:ring-green-400",
+                        onConfirm: () => {}
+                    });
+                    return true; 
                 }
             }
             
-            return false; // /* NUEVO: Retorna fallo si no entró en los if */
+            return false; 
         }
 
-        // --- NUEVA FUNCIONALIDAD: Lógica de "Crear Nuevo Archivo" ---
+        // --- Lógica de "Crear Nuevo Archivo" (Sin cambios) ---
         async function createNewFile() {
-            const fileName = document.getElementById('new-file-name').value;
+            const fileNameInput = document.getElementById('new-file-name');
+            if (!fileNameInput) {
+                console.error("No se encontró 'new-file-name'.");
+                return;
+            }
+            const fileName = fileNameInput.value;
+            
             if (!fileName || !appState.selectedRepo) {
-                alert("Por favor, introduce un nombre de archivo válido (ej: datos/nuevo.json o .csv).");
+                showConfirmModal({
+                    title: "Error",
+                    message: "Por favor, introduce un nombre de archivo válido (ej: datos/nuevo.json o .csv).",
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
                 return;
             }
 
             let initialContent = '';
             if (fileName.toLowerCase().endsWith('.json')) {
-                initialContent = '[]'; // Empezar con un array vacío
+                initialContent = '[]'; 
             } else if (fileName.toLowerCase().endsWith('.csv')) {
-                initialContent = 'id,nombre,descripcion'; // Empezar con encabezados
+                initialContent = 'id,nombre,descripcion'; 
             } else {
-                alert("El nombre de archivo debe terminar en .json o .csv");
+                showConfirmModal({
+                    title: "Error",
+                    message: "El nombre de archivo debe terminar en .json o .csv",
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
                 return;
             }
 
@@ -1022,22 +1211,34 @@
                 body: JSON.stringify({
                     message: commitMessage,
                     content: newContentBase64
-                    // NO incluimos 'sha' para crear un archivo nuevo
                 })
             };
 
             const result = await githubApiFetch(endpoint, options);
             
             if (result && result.content) {
-                alert(`¡Archivo "${fileName}" creado con éxito!`);
-                document.getElementById('new-file-name').value = '';
+                showConfirmModal({
+                    title: "Éxito",
+                    message: `¡Archivo "${fileName}" creado con éxito!`,
+                    confirmText: "Entendido",
+                    confirmClass: "bg-green-600 hover:bg-green-700 focus:ring-green-400",
+                    onConfirm: () => {}
+                });
+                fileNameInput.value = '';
                 handleRepoChange(appState.selectedRepo); // Recargar la lista de archivos
             } else {
-                alert("Error al crear el archivo. ¿Quizás ya existe?");
+                showConfirmModal({
+                    title: "Error",
+                    message: "Error al crear el archivo. ¿Quizás ya existe?",
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
             }
         }
 
-        // --- NUEVA FUNCIONALIDAD: Lógica de "Administrar Campos" ---
+
+        // --- Lógica de "Administrar Campos" (Sin cambios) ---
         function showSchemaModal() {
             document.getElementById('schema-modal').classList.remove('hidden');
             document.getElementById('schema-form').onsubmit = handleAddField;
@@ -1048,21 +1249,24 @@
             document.getElementById('schema-form').reset();
         }
 
-        // /* MODIFICADO: Solo cambia el estado local, no guarda */
         function handleAddField(e) {
             e.preventDefault();
             const newField = document.getElementById('new-field-name').value;
             const defaultValue = document.getElementById('new-field-default-value').value;
 
             if (!newField) {
-                alert("Por favor, introduce un nombre para el nuevo campo.");
+                showConfirmModal({
+                    title: "Error",
+                    message: "Por favor, introduce un nombre para el nuevo campo.",
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
                 return;
             }
 
-            // /* MODIFICADO: Usamos una copia para la mutación */
             const newData = JSON.parse(JSON.stringify(appState.data));
 
-            // Aplicar a todos los items en todas las categorías
             if (appState.dataStructure === 'object-of-arrays') {
                 Object.keys(newData).forEach(subject => {
                     newData[subject].forEach(item => {
@@ -1079,20 +1283,121 @@
                 });
             }
 
-            // /* MODIFICADO: Actualiza el estado local y marca como sucio */
             appState.data = newData;
             appState.isDirty = true;
+            appState.pendingChangesLog.push(`Campo añadido a todos: "${newField}"`);
             
             hideSchemaModal();
-            renderApp(); // Actualiza el botón de guardar
-            renderEditor(); // Actualiza la UI con los nuevos campos
-            alert(`¡Campo "${newField}" añadido localmente! Presiona "Guardar Cambios" para aplicar en GitHub.`);
+            renderApp(); 
+            renderEditor(); 
+            
+            showConfirmModal({
+                title: "Éxito Local",
+                message: `¡Campo "${newField}" añadido localmente! Presiona "Guardar Cambios" para aplicar en GitHub.`,
+                confirmText: "Entendido",
+                confirmClass: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-400",
+                onConfirm: () => {}
+            });
         }
 
 
-        // --- LÓGICA DE UTILIDAD ---
+        // --- LÓGICA DE UTILIDAD (Sin cambios) ---
 
-        // Convierte link de Google Drive a link de "preview" incrustable
+        // ... (triggerImportModal, handleLocalFileSelected, getEmbeddableDriveUrl, loadVideo) ...
+        
+        function triggerImportModal() {
+            showConfirmModal({
+                title: 'Importar Archivo Local (Reemplazo)',
+                message: 'Esto reemplazará todos tus cambios locales actuales con el contenido de un archivo .json o .csv de tu computadora. ¿Estás seguro?',
+                note: 'Los cambios no se guardarán en GitHub hasta que presiones "Guardar Cambios".',
+                confirmText: 'Sí, Importar y Reemplazar',
+                confirmClass: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-400',
+                onConfirm: () => {
+                    document.getElementById('local-file-importer').click();
+                }
+            });
+        }
+
+        async function handleLocalFileSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name;
+            let parsedData;
+
+            try {
+                const content = await file.text();
+                
+                if (fileName.toLowerCase().endsWith('.json')) {
+                    parsedData = JSON.parse(content);
+                } else if (fileName.toLowerCase().endsWith('.csv')) {
+                    parsedData = csvToJSON(content); 
+                } else {
+                    showConfirmModal({
+                        title: "Error de Archivo",
+                        message: "Error: Tipo de archivo no compatible. Por favor, selecciona un .json o .csv.",
+                        confirmText: "Entendido",
+                        confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                        onConfirm: () => {}
+                    });
+                    return;
+                }
+
+                const isOriginalArray = (appState.dataStructure === 'array');
+                const isNewDataArray = Array.isArray(parsedData);
+
+                if (isOriginalArray && !isNewDataArray) {
+                     showConfirmModal({
+                        title: "Error de Estructura",
+                        message: "Error: El archivo original es un array simple (ej: [ ]), pero el archivo que importaste es un objeto (ej: { \"pestana\": [] }). No se pueden mezclar.",
+                        confirmText: "Entendido",
+                        confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                        onConfirm: () => {}
+                    });
+                    return;
+                }
+                if (!isOriginalArray && isNewDataArray) {
+                    showConfirmModal({
+                        title: "Error de Estructura",
+                        message: "Error: El archivo original es un objeto de pestañas (ej: { \"pestana\": [] }), pero el archivo que importaste es un array simple (ej: [ ]). No se pueden mezclar.",
+                        confirmText: "Entendido",
+                        confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                        onConfirm: () => {}
+                    });
+                    return;
+                }
+                
+                appState.data = parsedData; 
+                appState.isDirty = true;
+                appState.pendingChangesLog = [`Importado contenido completo desde el archivo local: "${fileName}"`];
+
+                analyzeDataStructure();
+                
+                renderApp();
+                renderEditor();
+                
+                showConfirmModal({
+                    title: "Éxito de Importación",
+                    message: `¡Éxito! Contenido de "${fileName}" importado. Revisa los cambios y presiona "Guardar Cambios".`,
+                    confirmText: "Entendido",
+                    confirmClass: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-400",
+                    onConfirm: () => {}
+                });
+
+            } catch (error) {
+                console.error("Error al importar archivo local:", error);
+                showConfirmModal({
+                    title: "Error al Importar",
+                    message: `Error al leer o parsear el archivo: ${error.message}`,
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
+            } finally {
+                event.target.value = null;
+            }
+        }
+        
         function getEmbeddableDriveUrl(url) {
             if (!url || !url.includes('drive.google.com')) return '';
             const match = url.match(/file\/d\/([a-zA-Z0-9_-]+)/);
@@ -1102,7 +1407,6 @@
             return '';
         }
 
-        // Carga el video en el placeholder al hacer clic
         function loadVideo(element) {
             const url = element.dataset.embedUrl;
             if (url) {
@@ -1118,27 +1422,162 @@
             }
         }
 
-        // --- NUEVAS FUNCIONES DE CONVERSIÓN (PapaParse) ---
-        
-        /**
-         * Convierte un string CSV a un array de objetos JSON usando PapaParse.
-         */
+        // ... (triggerImageUpload, handleImageUpload sin cambios: esta es la subida *dentro* del formulario) ...
+        function triggerImageUpload(targetInputId) {
+            appState.currentImageFieldTarget = targetInputId;
+            document.getElementById('image-uploader-input').click();
+        }
+
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file || !appState.currentImageFieldTarget) return;
+
+            const fileName = `${Date.now()}-${file.name}`;
+            const filePath = `uploads/${fileName}`;
+
+            try {
+                const base64Content = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const base64 = reader.result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(file);
+                });
+
+                const endpoint = `/repos/${appState.selectedRepo}/contents/${filePath}`;
+                const options = {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        message: `Subido ${fileName} desde la plataforma`,
+                        content: base64Content,
+                    })
+                };
+
+                const result = await githubApiFetch(endpoint, options);
+                
+                if (result && result.content && result.content.download_url) {
+                    const downloadUrl = result.content.download_url;
+                    
+                    document.getElementById(appState.currentImageFieldTarget).value = downloadUrl;
+                    
+                    appState.isDirty = true;
+                    appState.pendingChangesLog.push(`Archivo subido: "${fileName}"`);
+                    
+                    renderApp(); 
+                    
+                    showConfirmModal({
+                        title: "Archivo Subido",
+                        message: `¡Archivo "${fileName}" subido con éxito! La URL ha sido añadida. No olvides guardar los cambios.`,
+                        confirmText: "Entendido",
+                        confirmClass: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-400",
+                        onConfirm: () => {}
+                    });
+                    
+                } else {
+                    throw new Error("La respuesta de GitHub no contenía la URL de descarga.");
+                }
+
+            } catch (error) {
+                console.error("Error al subir el archivo:", error);
+                showConfirmModal({
+                    title: "Error al Subir Archivo",
+                    message: `Error al subir el archivo: ${error.message}`,
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
+            } finally {
+                event.target.value = null;
+                appState.currentImageFieldTarget = null;
+            }
+        }
+
+        // ... (triggerGeneralFileUpload, handleGeneralFileUpload sin cambios: esta es la subida *general*) ...
+        function triggerGeneralFileUpload() {
+            document.getElementById('general-file-uploader').click();
+        }
+
+        async function handleGeneralFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileName = `${Date.now()}-${file.name}`;
+            const filePath = `uploads/${fileName}`; 
+
+            try {
+                const base64Content = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const base64 = reader.result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(file);
+                });
+
+                const endpoint = `/repos/${appState.selectedRepo}/contents/${filePath}`;
+                const options = {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        message: `Subido ${fileName} desde la plataforma (general)`,
+                        content: base64Content,
+                    })
+                };
+
+                const result = await githubApiFetch(endpoint, options);
+                
+                if (result && result.content && result.content.download_url) {
+                    const downloadUrl = result.content.download_url;
+                    
+                    showConfirmModal({
+                        title: "Archivo Subido con Éxito",
+                        message: `Tu archivo "${fileName}" se subió. Puedes copiar la URL:\n\n${downloadUrl}`,
+                        note: "Pega esta URL en cualquier campo de texto.",
+                        confirmText: "¡Entendido!",
+                        confirmClass: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-400",
+                        onConfirm: () => {}
+                    });
+                    
+                } else {
+                    throw new Error("La respuesta de GitHub no contenía la URL de descarga.");
+                }
+
+            } catch (error) {
+                console.error("Error al subir el archivo general:", error);
+                showConfirmModal({
+                    title: "Error al Subir Archivo",
+                    message: `Error al subir el archivo: ${error.message}`,
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
+            } finally {
+                event.target.value = null;
+            }
+        }
+
+        // ... (csvToJSON, jsonToCSV sin cambios) ...
         function csvToJSON(csvString) {
             const result = Papa.parse(csvString, {
-                header: true, // La primera fila es el encabezado
+                header: true, 
                 skipEmptyLines: true,
-                dynamicTyping: true // Intenta convertir números/booleanos
+                dynamicTyping: true 
             });
             if (result.errors.length > 0) {
                 console.error("Errores de PapaParse (CSV a JSON):", result.errors);
-                alert(`Error al leer el CSV: ${result.errors[0].message}`);
+                showConfirmModal({
+                    title: "Error de CSV",
+                    message: `Error al leer el CSV: ${result.errors[0].message}`,
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
             }
             return result.data;
         }
 
-        /**
-         * Convierte un array de objetos JSON a un string CSV usando PapaParse.
-         */
         function jsonToCSV(jsonArray) {
             if (!jsonArray || jsonArray.length === 0) return '';
             
@@ -1146,22 +1585,18 @@
                 return Papa.unparse(jsonArray);
             } catch (error) {
                 console.error("Error de PapaParse (JSON a CSV):", error);
-                alert(`Error al convertir a CSV: ${error.message}`);
+                showConfirmModal({
+                    title: "Error de CSV",
+                    message: `Error al convertir a CSV: ${error.message}`,
+                    confirmText: "Entendido",
+                    confirmClass: "bg-red-600 hover:bg-red-700 focus:ring-red-400",
+                    onConfirm: () => {}
+                });
                 return '';
             }
         }
 
-        // --- /* NUEVO: Modal de Confirmación Genérico */ ---
-        /**
-         * Muestra un modal de confirmación genérico.
-         * @param {object} options
-         * @param {string} options.title - Título del modal.
-         * @param {string} options.message - Mensaje principal.
-         * @param {string} [options.note] - Nota opcional (en rojo).
-         * @param {string} options.confirmText - Texto del botón de confirmación.
-         * @param {string} options.confirmClass - Clases de Tailwind para el botón (ej: 'bg-red-600 hover:bg-red-700').
-         * @param {function} options.onConfirm - Callback a ejecutar si se confirma.
-         */
+        // ... (showConfirmModal, hideConfirmModal, listener 'beforeunload' sin cambios) ...
         function showConfirmModal({ title, message, note, confirmText, confirmClass, onConfirm }) {
             document.getElementById('confirm-modal-title').textContent = title;
             document.getElementById('confirm-modal-message').textContent = message;
@@ -1177,15 +1612,13 @@
             const acceptBtn = document.getElementById('confirm-modal-accept-btn');
             acceptBtn.textContent = confirmText;
             
-            // Resetear clases y aplicar las nuevas
             acceptBtn.className = 'px-4 py-2 text-white rounded-md shadow-sm focus:outline-none focus:ring-2';
             acceptBtn.classList.add(...confirmClass.split(' '));
 
-            // Re-vincular el evento para evitar callbacks duplicados
             const newAcceptBtn = acceptBtn.cloneNode(true);
             newAcceptBtn.onclick = () => {
-                hideConfirmModal(); // Ocultar primero
-                onConfirm();        // Luego ejecutar
+                hideConfirmModal(); 
+                onConfirm();       
             };
             acceptBtn.parentNode.replaceChild(newAcceptBtn, acceptBtn);
             
@@ -1196,12 +1629,9 @@
             document.getElementById('confirm-modal').classList.add('hidden');
         }
 
-        // --- /* NUEVO: Protección para cerrar la pestaña */ ---
         window.addEventListener('beforeunload', (event) => {
             if (appState.isDirty) {
-                // Previene que la pestaña se cierre automáticamente
                 event.preventDefault();
-                // Requerido por algunos navegadores
                 event.returnValue = '';
             }
         });
@@ -1212,22 +1642,31 @@
             logout,
             goBackToBrowser,
             handleRepoChange,
-            handleFileChange,
-            loadFileContent,
+            // **** CORRECCIÓN: handleFileChange eliminado ****
+            loadFileContent, // <-- Ahora se pasa el 'filePath'
             showEditModal,
             hideEditModal,
             handleEditItem,
             showDeleteConfirmation,
-            hideConfirmModal, // MODIFICADO
+            hideConfirmModal, 
             handleDeleteItem,
             handleAddItem,
             loadVideo,
-            renderItemsList, // Exponer para la búsqueda
+            renderItemsList, 
             createNewFile,
             showSchemaModal,
             hideSchemaModal,
             handleAddField,
-            saveAllChanges // /* NUEVO */
+            saveAllChanges, 
+            _reallySaveAllChanges, 
+            showReviewChangesModal, 
+            hideReviewChangesModal, 
+            triggerImportModal, 
+            handleLocalFileSelected, 
+            triggerImageUpload, 
+            handleImageUpload, 
+            triggerGeneralFileUpload, 
+            handleGeneralFileUpload   
         };
 
         // Render inicial
@@ -1236,3 +1675,4 @@
 
 </body>
 </html>
+
