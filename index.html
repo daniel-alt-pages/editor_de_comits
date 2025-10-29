@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrador de Contenidos de GitHub</title>
+    <!-- Importamos Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importamos Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- NUEVA FUNCIONALIDAD: Importamos PapaParse para CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <style>
+        /* Aplicamos la fuente Inter a toda la página */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el estado de carga */
+        .loading {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        /* Transiciones suaves para botones y formularios */
+        button, a, input, select, textarea {
+            transition: all 0.2s ease-in-out;
+        }
+        /* Estilo para el placeholder del video */
+        .video-placeholder {
+            transition: background-color 0.2s ease;
+        }
+        .video-placeholder:hover {
+            background-color: #374151; /* gray-700 */
+        }
+        .video-placeholder svg {
+            transition: transform 0.2s ease;
+        }
+        .video-placeholder:hover svg {
+            transform: scale(1.1);
+        }
+        /* Ocultar flechas en input[type=search] */
+        input[type="search"]::-webkit-search-decoration,
+        input[type="search"]::-webkit-search-cancel-button,
+        input[type="search"]::-webkit-search-results-button,
+        input[type="search"]::-webkit-search-results-decoration {
+            -webkit-appearance: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+
+        <!-- Encabezado Fijo -->
+        <header class="sticky top-0 z-40 bg-gray-50/90 backdrop-blur-md pt-6 pb-4 mb-6 border-b border-gray-200 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-700">Plataforma de Administración (GitHub)</h1>
+                <p id="auth-status" class="text-sm text-gray-600">Esperando token de GitHub...</p>
+            </div>
+            <!-- Contenedor de botones del encabezado -->
+            <div class="flex items-center space-x-2">
+                <!-- MODIFICADO: Añadido botón "Guardar Cambios" -->
+                <button id="save-all-button" onclick="app.saveAllChanges()" class="hidden px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <svg class="inline-block w-5 h-5 -ml-1 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 2c-1.717 0-3.401.464-4.825 1.315C3.75 4.18 2.833 5.432 2.24 6.91A10.038 10.038 0 002 10c0 1.717.464 3.401 1.315 4.825C4.18 16.25 5.432 17.167 6.91 17.76 8.388 18.353 9.94 18.5 11.5 18.5c1.559 0 3.111-.147 4.59-.74A10.005 10.005 0 0017.76 13.09c.594-1.478.9-3.03.9-4.59s-.306-3.112-.9-4.59A10.005 10.005 0 0013.09 2.24C11.612 1.647 10.06 1.5 8.5 1.5H10zm-.5 13a.5.5 0 01-.5-.5v-3a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v3a.5.5 0 01-.5.5h-1zm.5-7a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-1z" clip-rule="evenodd" />
+                    </svg>
+                    Guardar Cambios
+                </button>
+                <button id="back-to-browser-button" onclick="app.goBackToBrowser()" class="hidden px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Cambiar Archivo
+                </button>
+                <button id="logout-button" onclick="app.logout()" class="hidden px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </header>
+
+        <!-- 1. VISTA DE LOGIN (Inicial) -->
+        <main id="login-view" class="p-8 bg-white rounded-lg shadow-md max-w-lg mx-auto border border-gray-200">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Conectar a GitHub</h2>
+            <p class="text-gray-600 mb-6">Pega tu "Token de Acceso Personal" (PAT) de GitHub. El token no se guarda y se borra al cerrar la pestaña.</p>
+            <div class="space-y-4">
+                <div>
+                    <label for="token-input" class="block text-sm font-medium text-gray-700 mb-1">Token de Acceso Personal</label>
+                    <input type="password" id="token-input" placeholder="ghp_..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">Token con permisos de `repo` necesario.</p>
+                </div>
+                <button id="login-button" onclick="app.handleLogin()" class="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400">
+                    Conectar
+                </button>
+            </div>
+        </main>
+
+        <!-- 2. VISTA DE NAVEGADOR DE REPOSITORIOS (Oculta) -->
+        <main id="browser-view" class="hidden">
+            <!-- Sección de Cargar Archivo -->
+            <div class="p-8 bg-white rounded-lg shadow-md border border-gray-200">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Seleccionar Contenido</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Columna 1: Repositorios -->
+                    <div>
+                        <label for="repo-select" class="block text-sm font-medium text-gray-700 mb-1">1. Repositorio</label>
+                        <select id="repo-select" onchange="app.handleRepoChange(this.value)" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
+                            <option value="">Cargando repositorios...</option>
+                        </select>
+                    </div>
+                    <!-- Columna 2: Archivos -->
+                    <div>
+                        <label for="file-select" class="block text-sm font-medium text-gray-700 mb-1">2. Archivo (.json / .csv / .txt)</label>
+                        <select id="file-select" onchange="app.handleFileChange(this.value)" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
+                            <option value="">Selecciona un repositorio primero</option>
+                        </select>
+                    </div>
+                    <!-- Columna 3: Cargar -->
+                    <div class="md:pt-7">
+                        <button id="load-file-button" onclick="app.loadFileContent()" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-400" disabled>
+                            Cargar Editor
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- NUEVA FUNCIONALIDAD: Sección de Crear Nuevo Archivo -->
+            <div id="create-file-container" class="hidden mt-6 p-8 bg-white rounded-lg shadow-md border border-gray-200">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Crear Nuevo Archivo</h2>
+                <p class="text-sm text-gray-600 mb-4">Crea un nuevo archivo `.json` o `.csv` en el repositorio seleccionado. Incluye la ruta si es necesario (ej: `datos/mi_archivo.json`).</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2">
+                        <label for="new-file-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del Archivo (con extensión)</label>
+                        <input type="text" id="new-file-name" placeholder="ej: data/nuevo.json o reportes.csv" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="md:pt-7">
+                        <button id="create-file-button" onclick="app.createNewFile()" class="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-400" disabled>
+                            Crear Archivo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- 3. INDICADOR DE CARGA GLOBAL -->
+        <div id="loading-spinner" class="hidden text-center p-10">
+            <p class="text-lg font-medium text-blue-600">Cargando...</p>
+        </div>
+
+        <!-- 4. VISTA DE EDITOR (Oculta) -->
+        <main id="app-container" class="hidden">
+            <!-- Pestañas de Asignaturas (Dinámicas) -->
+            <nav id="tabs-container" class="flex flex-wrap gap-2 mb-6">
+                <!-- Las pestañas se generan con JavaScript -->
+            </nav>
+
+            <!-- Contenido: Lista de Items y Formulario de Añadir -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Columna Izquierda/Principal: Lista de Items -->
+                <section class="lg:col-span-2">
+                    
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-4">
+                        <h2 id="items-list-title" class="text-2xl font-semibold text-gray-800">Items</h2>
+                        
+                        <div class="flex items-center gap-2">
+                            <!-- NUEVA FUNCIONALIDAD: Barra de Búsqueda -->
+                            <div class="relative flex-grow">
+                                <input type="search" id="search-bar" oninput="app.renderItemsList()" placeholder="Buscar items..." class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <!-- NUEVA FUNCIONALIDAD: Botón de Administrar Campos -->
+                            <button id="schema-manager-button" onclick="app.showSchemaModal()" class="hidden p-2 bg-white text-gray-600 rounded-md shadow-sm border border-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Administrar Campos">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM17 8a1 1 0 10-2 0v.268a2 2 0 000 3.464V16a1 1 0 102 0v-4.268a2 2 0 000-3.464V8z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="items-list">
+                        <!-- Los items se generan con JavaScript en un grid -->
+                    </div>
+                </section>
+
+                <!-- Columna Derecha/Lateral: Formulario de Añadir -->
+                <section id="add-item-form-container" class="bg-white p-6 rounded-lg shadow-md border border-gray-200 h-fit lg:sticky lg:top-28">
+                    <!-- El formulario se genera con JavaScript -->
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALES -->
+
+    <!-- Modal de Edición -->
+    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="edit-modal-title" class="text-xl font-semibold text-gray-800">Editar Item</h3>
+                <button id="edit-modal-close" onclick="app.hideEditModal()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            </div>
+            <form id="edit-form" class="space-y-4">
+                <!-- Contenido generado por JS -->
+            </form>
+        </div>
+    </div>
+
+    <!-- MODIFICADO: Modal de Confirmación Genérico (antes 'delete-modal') -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="confirm-modal-title" class="text-xl font-semibold text-gray-800">Confirmar Acción</h3>
+                <button id="confirm-modal-close" onclick="app.hideConfirmModal()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            </div>
+            <p id="confirm-modal-message" class="text-gray-600 mb-4">¿Estás seguro?</p>
+            <p id="confirm-modal-note" class="text-sm text-red-600 mb-6 hidden">Esta acción no se puede deshacer.</p>
+            <div class="flex justify-end gap-3">
+                <button type="button" id="confirm-modal-cancel" onclick="app.hideConfirmModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancelar</button>
+                <!-- El texto y la clase de este botón se cambian dinámicamente -->
+                <button type="button" id="confirm-modal-accept-btn" class="px-4 py-2 text-white rounded-md shadow-sm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NUEVA FUNCIONALIDAD: Modal de Administrar Campos (Schema) -->
+    <div id="schema-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Administrar Campos</h3>
+                <button id="schema-modal-close" onclick="app.hideSchemaModal()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            </div>
+            <p class="text-gray-600 mb-4">Añade un nuevo campo a **todos** los items de este archivo. Si el campo ya existe en un item, no será modificado.</p>
+            <form id="schema-form" class="space-y-4">
+                <div>
+                    <label for="new-field-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre del Nuevo Campo</label>
+                    <input type="text" id="new-field-name" placeholder="ej: autor" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="new-field-default-value" class="block text-sm font-medium text-gray-700 mb-1">Valor por Defecto</label>
+                    <input type="text" id="new-field-default-value" placeholder="ej: N/A" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="app.hideSchemaModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Añadir Campo a Todos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- SCRIPT PRINCIPAL DE LA APLICACIÓN -->
+    <script type="module">
+        // --- VARIABLES GLOBALES Y ESTADO ---
+        let GITHUB_TOKEN = '';
+        const GITHUB_API_BASE = 'https://api.github.com';
+        let GITHUB_USER = '';
+
+        const appState = {
+            loading: false,
+            view: 'login', // 'login', 'browser', 'editor'
+            isDirty: false, // /* NUEVO: Estado para cambios sin guardar */
+            repos: [],
+            repoFiles: [],
+            selectedRepo: '', // e.g., 'user/repo-name'
+            selectedFile: '', // e.g., 'path/to/bd.json'
+            currentSha: '',
+            data: null, // El contenido JSON del archivo
+            dataStructure: 'array', // 'array' o 'object-of-arrays'
+            selectedSubject: null, // La "pestaña" (e.g., 'matematicas')
+            editingItem: null // { subject, index } o { index }
+        };
+
+        // --- CONTROLADOR PRINCIPAL DE VISTAS ---
+        function renderApp() {
+            const views = ['login-view', 'browser-view', 'app-container', 'loading-spinner'];
+            const loadingEl = document.getElementById('loading-spinner');
+            const logoutBtn = document.getElementById('logout-button');
+            const backBtn = document.getElementById('back-to-browser-button');
+            const authStatus = document.getElementById('auth-status');
+            const createContainer = document.getElementById('create-file-container');
+            const schemaBtn = document.getElementById('schema-manager-button');
+            const saveAllBtn = document.getElementById('save-all-button'); // /* NUEVO */
+
+            // Resetear vistas
+            views.forEach(v => document.getElementById(v).classList.add('hidden'));
+            backBtn.classList.add('hidden');
+            createContainer.classList.add('hidden');
+            schemaBtn.classList.add('hidden');
+            saveAllBtn.classList.add('hidden'); // /* NUEVO */
+
+            if (appState.loading) {
+                loadingEl.classList.remove('hidden');
+            } else {
+                loadingEl.classList.add('hidden');
+            }
+
+            // Mostrar vista actual
+            if (appState.view === 'login') {
+                document.getElementById('login-view').classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                authStatus.textContent = 'Esperando token de GitHub...';
+            } else if (appState.view === 'browser') {
+                document.getElementById('browser-view').classList.remove('hidden');
+                if (appState.selectedRepo) createContainer.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                authStatus.textContent = `Conectado como: ${GITHUB_USER}`;
+                appState.isDirty = false; // /* NUEVO: Resetear al salir del editor */
+            } else if (appState.view === 'editor') {
+                document.getElementById('app-container').classList.remove('hidden');
+                schemaBtn.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                backBtn.classList.remove('hidden');
+                saveAllBtn.classList.remove('hidden'); // /* NUEVO */
+                
+                // /* NUEVO: Habilitar o deshabilitar el botón de guardar */
+                saveAllBtn.disabled = !appState.isDirty;
+                saveAllBtn.textContent = appState.isDirty ? 'Guardar Cambios' : 'Guardado';
+
+                authStatus.textContent = `Editando: ${appState.selectedRepo} / ${appState.selectedFile}`;
+                renderEditor();
+            }
+        }
+
+        // --- LÓGICA DE API DE GITHUB (GENÉRICA) ---
+        async function githubApiFetch(endpoint, options = {}) {
+            if (!GITHUB_TOKEN) {
+                alert("Error: Token de GitHub no encontrado.");
+                logout();
+                return;
+            }
+
+            appState.loading = true;
+            renderApp();
+
+            const headers = new Headers({
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'X-GitHub-Api-Version': '2022-11-28',
+                ...options.headers,
+            });
+
+            try {
+                const response = await fetch(`${GITHUB_API_BASE}${endpoint}`, { ...options, headers });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(`Error de GitHub API (${response.status}): ${error.message}`);
+                }
+                
+                if (response.status === 204) { // No Content (para DELETE)
+                    return null;
+                }
+                if (response.status === 201) { // Created (para PUT - new file)
+                    return await response.json();
+                }
+
+                return await response.json();
+
+            } catch (error) {
+                console.error("Error en githubApiFetch:", error);
+                
+                if (error.message.includes("401")) {
+                    alert("Error de Autenticación (401): Token de GitHub inválido, expirado o sin permisos 'repo'.\n\nPor favor, verifica tu token e inténtalo de nuevo.");
+                    _reallyLogout(); // /* MODIFICADO: Usar el logout real */
+                } else {
+                    alert(`Error de API: ${error.message}`);
+                }
+
+            } finally {
+                appState.loading = false;
+                renderApp();
+            }
+        }
+
+        // --- 1. LÓGICA DE AUTENTICACIÓN ---
+
+        async function handleLogin() {
+            const token = document.getElementById('token-input').value;
+            if (!token) {
+                alert("Por favor, introduce un token.");
+                return;
+            }
+            GITHUB_TOKEN = token;
+
+            const user = await githubApiFetch('/user');
+            if (user) {
+                GITHUB_USER = user.login;
+                appState.view = 'browser';
+                renderApp();
+                fetchRepos();
+            }
+        }
+
+        // /* NUEVO: Función de "confirmación" para salir */
+        function logout() {
+            if (appState.isDirty) {
+                showConfirmModal({
+                    title: '¿Cerrar Sesión?',
+                    message: 'Tienes cambios locales sin guardar. ¿Estás seguro de que quieres salir y perderlos?',
+                    note: 'Los cambios no se guardarán en GitHub.',
+                    confirmText: 'Sí, Salir y Descartar',
+                    confirmClass: 'bg-red-600 hover:bg-red-700 focus:ring-red-400',
+                    onConfirm: _reallyLogout // Llama a la función de logout real
+                });
+            } else {
+                _reallyLogout();
+            }
+        }
+
+        // /* NUEVO: Función de logout real (sin confirmación) */
+        function _reallyLogout() {
+            GITHUB_TOKEN = '';
+            GITHUB_USER = '';
+            // Resetear todo el estado
+            Object.assign(appState, {
+                loading: false,
+                view: 'login',
+                isDirty: false,
+                repos: [],
+                repoFiles: [],
+                selectedRepo: '',
+                selectedFile: '',
+                currentSha: '',
+                data: null,
+                dataStructure: 'array',
+                selectedSubject: null,
+                editingItem: null
+            });
+            document.getElementById('token-input').value = '';
+            renderApp();
+        }
+
+        // /* NUEVO: Función de "confirmación" para volver */
+        function goBackToBrowser() {
+            if (appState.isDirty) {
+                showConfirmModal({
+                    title: '¿Cambiar de Archivo?',
+                    message: 'Tienes cambios locales sin guardar. ¿Estás seguro de que quieres salir y perderlos?',
+                    note: 'Los cambios no se guardarán en GitHub.',
+                    confirmText: 'Sí, Salir y Descartar',
+                    confirmClass: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-400',
+                    onConfirm: _reallyGoBackToBrowser // Llama a la función real
+                });
+            } else {
+                _reallyGoBackToBrowser();
+            }
+        }
+
+        // /* NUEVO: Función real para volver (sin confirmación) */
+        function _reallyGoBackToBrowser() {
+            appState.view = 'browser';
+            // Resetear estado del editor
+            appState.selectedFile = '';
+            appState.currentSha = '';
+            appState.data = null;
+            appState.selectedSubject = null;
+            appState.editingItem = null;
+            appState.isDirty = false;
+            
+            try {
+                document.getElementById('file-select').value = '';
+                document.getElementById('load-file-button').disabled = true;
+            } catch (e) {
+                console.warn("No se pudo resetear el file-select:", e);
+            }
+
+            renderApp();
+        }
+
+
+        // --- 2. LÓGICA DE NAVEGACIÓN (REPOS Y ARCHIVOS) ---
+
+        async function fetchRepos() {
+            const repos = await githubApiFetch('/user/repos?type=all&sort=updated');
+            if (!repos) return;
+
+            appState.repos = repos.map(repo => repo.full_name);
+            const repoSelect = document.getElementById('repo-select');
+            repoSelect.innerHTML = '<option value="">Selecciona un repositorio...</option>';
+            appState.repos.forEach(repoName => {
+                const option = new Option(repoName, repoName);
+                repoSelect.add(option);
+            });
+            repoSelect.disabled = false;
+        }
+
+        async function handleRepoChange(repoFullName) {
+            appState.selectedRepo = repoFullName;
+            appState.selectedFile = '';
+            document.getElementById('load-file-button').disabled = true;
+            document.getElementById('create-file-button').disabled = !repoFullName;
+            
+            const fileSelect = document.getElementById('file-select');
+            fileSelect.innerHTML = '<option value="">Cargando archivos...</option>';
+            fileSelect.disabled = true;
+            
+            if (!repoFullName) {
+                fileSelect.innerHTML = '<option value="">Selecciona un repositorio primero</option>';
+                renderApp();
+                return;
+            }
+            
+            renderApp(); // Para mostrar el contenedor de "Crear Archivo"
+
+            const data = await githubApiFetch(`/repos/${repoFullName}/git/trees/main?recursive=1`);
+            if (!data || !data.tree) return;
+
+            // Filtrar archivos
+            appState.repoFiles = data.tree
+                .filter(file => file.type === 'blob' && (file.path.endsWith('.json') || file.path.endsWith('.jsonc') || file.path.endsWith('.csv') || file.path.endsWith('.txt')))
+                .map(file => file.path);
+            
+            fileSelect.innerHTML = '<option value="">Selecciona un archivo...</option>';
+            appState.repoFiles.forEach(filePath => {
+                const option = new Option(filePath, filePath);
+                fileSelect.add(option);
+            });
+            fileSelect.disabled = false;
+        }
+
+        function handleFileChange(filePath) {
+            appState.selectedFile = filePath;
+            document.getElementById('load-file-button').disabled = !filePath;
+        }
+
+
+        // --- 3. LÓGICA DE CARGA Y ANÁLISIS DE DATOS ---
+
+        async function loadFileContent() {
+            if (!appState.selectedRepo || !appState.selectedFile) return;
+
+            const fileData = await githubApiFetch(`/repos/${appState.selectedRepo}/contents/${appState.selectedFile}`);
+            if (!fileData) return;
+
+            try {
+                // Decodificar Base64 a UTF-8 (maneja tildes)
+                const decodedContent = decodeURIComponent(escape(atob(fileData.content)));
+                
+                // Si es un CSV, lo convertimos a JSON con PapaParse
+                if (appState.selectedFile.toLowerCase().endsWith('.csv')) {
+                    appState.data = csvToJSON(decodedContent);
+                } else {
+                // Si no, asumimos que es JSON
+                    appState.data = JSON.parse(decodedContent);
+                }
+
+                appState.currentSha = fileData.sha;
+                appState.isDirty = false; // /* NUEVO: El estado inicial no está sucio */
+                analyzeDataStructure();
+                appState.view = 'editor';
+                renderApp();
+
+            } catch (error) {
+                console.error("Error al parsear el archivo:", error);
+                alert("Error: El archivo seleccionado no es un JSON, CSV válido o está corrupto.");
+            }
+        }
+
+        function analyzeDataStructure() {
+            // Caso 1: Objeto de Arrays (ej. { matematicas: [...], lectura: [...] })
+            if (typeof appState.data === 'object' && !Array.isArray(appState.data) && appState.data !== null) {
+                const keys = Object.keys(appState.data);
+                if (keys.length > 0 && Array.isArray(appState.data[keys[0]])) {
+                    appState.dataStructure = 'object-of-arrays';
+                    appState.selectedSubject = keys[0]; // Seleccionar la primera "pestaña"
+                    return;
+                }
+            }
+            // Caso 2: Array de Objetos (ej. [ {...}, {...} ])
+            appState.dataStructure = 'array';
+            appState.selectedSubject = null;
+        }
+
+
+        // --- 4. LÓGICA DEL EDITOR DINÁMICO ---
+
+        function renderEditor() {
+            renderTabs();
+            renderItemsList();
+            renderAddItemForm();
+        }
+
+        // Dibuja las pestañas
+        function renderTabs() {
+            const tabsContainer = document.getElementById('tabs-container');
+            tabsContainer.innerHTML = '';
+            
+            if (appState.dataStructure !== 'object-of-arrays') {
+                tabsContainer.classList.add('hidden');
+                return;
+            }
+
+            tabsContainer.classList.remove('hidden');
+            const subjects = Object.keys(appState.data);
+
+            subjects.forEach(subject => {
+                const isSelected = subject === appState.selectedSubject;
+                const tabClasses = isSelected 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm border border-gray-200';
+                
+                const tab = document.createElement('button');
+                tab.textContent = subject.charAt(0).toUpperCase() + subject.slice(1);
+                tab.className = `px-4 py-2 font-medium rounded-md ${tabClasses}`;
+                tab.onclick = () => {
+                    appState.selectedSubject = subject;
+                    renderEditor(); // Re-dibujar al cambiar de pestaña
+                };
+                tabsContainer.appendChild(tab);
+            });
+        }
+
+        // Dibuja la lista de items (tarjetas)
+        function renderItemsList() {
+            const itemsListContainer = document.getElementById('items-list');
+            itemsListContainer.className = "grid grid-cols-1 xl:grid-cols-3 gap-6"; // 3 columnas en XL
+            itemsListContainer.innerHTML = '';
+
+            const items = (appState.dataStructure === 'object-of-arrays')
+                ? appState.data[appState.selectedSubject]
+                : appState.data;
+
+            const title = (appState.dataStructure === 'object-of-arrays')
+                ? `Items de "${appState.selectedSubject}"`
+                : 'Items del Archivo';
+            document.getElementById('items-list-title').textContent = title;
+
+            if (!items || !Array.isArray(items) || items.length === 0) {
+                itemsListContainer.innerHTML = '<p class="text-gray-500 lg:col-span-2">No hay items en esta categoría.</p>';
+                return;
+            }
+            
+            // NUEVA FUNCIONALIDAD: Lógica de Búsqueda
+            const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+            const filteredItems = items.filter(item => {
+                if (!searchTerm) return true;
+                return Object.values(item).some(val => 
+                    String(val).toLowerCase().includes(searchTerm)
+                );
+            });
+            // FIN Lógica de Búsqueda
+
+            if (filteredItems.length === 0) {
+                itemsListContainer.innerHTML = `<p class="text-gray-500 lg:col-span-2">No se encontraron items que coincidan con "${searchTerm}".</p>`;
+            }
+
+            filteredItems.forEach((item) => {
+                // Encontrar el índice original para el botón de editar/borrar
+                const originalIndex = items.indexOf(item);
+                
+                const itemEl = document.createElement('div');
+                itemEl.className = 'bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col hover:shadow-lg transition-shadow';
+                
+                let videoPreviewHtml = '';
+                // Lógica de vista previa de video (Clic para Cargar)
+                if (item.video_link && typeof item.video_link === 'string') {
+                    const embedUrl = getEmbeddableDriveUrl(item.video_link);
+                    if (embedUrl) {
+                        videoPreviewHtml = `
+                            <div 
+                                class="video-placeholder aspect-video w-full bg-gray-800 cursor-pointer flex items-center justify-center relative"
+                                data-embed-url="${embedUrl + '?autoplay=1'}"
+                                onclick="app.loadVideo(this)"
+                            >
+                                <svg class="w-16 h-16 text-white text-opacity-70" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="absolute bottom-2 right-2 text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">Cargar video</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Generación dinámica del contenido
+                let cardContentHtml = '<div class="p-4 flex-grow">';
+                for (const [key, value] of Object.entries(item)) {
+                    if (key.toLowerCase() === 'title') {
+                        cardContentHtml += `<h3 class="text-lg font-semibold text-blue-700 mb-1 break-words">${value}</h3>`;
+                    } else if (key.toLowerCase() === 'video_link') {
+                        cardContentHtml += `<a href="${value}" target="_blank" class="text-sm text-blue-500 hover:underline break-all mt-2 inline-block">Ver Video</a>`;
+                    } else if (key.toLowerCase() !== 'description') {
+                        cardContentHtml += `<p class="text-sm text-gray-600 break-words"><strong>${key}:</strong> ${value}</p>`;
+                    }
+                }
+                if (item.description) {
+                     cardContentHtml += `<p class="text-sm text-gray-700 mt-2 break-words"><strong>Descripción:</strong> ${item.description}</p>`;
+                }
+                cardContentHtml += '</div>';
+
+                itemEl.innerHTML = `
+                    ${videoPreviewHtml}
+                    ${cardContentHtml}
+                    <div class="p-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+                        <button data-index="${originalIndex}" class="edit-btn flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-yellow-500 text-white text-sm font-medium rounded-md shadow-sm hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                            Editar
+                        </button>
+                        <button data-index="${originalIndex}" class="delete-btn flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                            Eliminar
+                        </button>
+                    </div>
+                `;
+                itemsListContainer.appendChild(itemEl);
+            });
+
+            // Asignar eventos
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.onclick = (e) => showEditModal(e.currentTarget.dataset.index);
+            });
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = (e) => showDeleteConfirmation(e.currentTarget.dataset.index);
+            });
+        }
+
+        // Genera el formulario de "Añadir Item"
+        function renderAddItemForm() {
+            const formContainer = document.getElementById('add-item-form-container');
+            const items = (appState.dataStructure === 'object-of-arrays')
+                ? appState.data[appState.selectedSubject]
+                : appState.data;
+
+            const title = (appState.dataStructure === 'object-of-arrays')
+                ? `Añadir a "${appState.selectedSubject}"`
+                : 'Añadir Nuevo Item';
+            
+            let schema = null;
+
+            if (items && items.length > 0) {
+                schema = items[0]; // Usamos el primer item como plantilla
+            } else if (appState.dataStructure === 'object-of-arrays') {
+                // Si este array está vacío, buscamos un schema en otro array
+                for (const key in appState.data) {
+                    if (appState.data[key].length > 0) {
+                        schema = appState.data[key][0];
+                        break;
+                    }
+                }
+            }
+
+            if (!schema) {
+                formContainer.innerHTML = `<h3 class="text-xl font-semibold mb-4 text-gray-800">${title}</h3><p class="text-gray-500">No se puede generar el formulario porque el archivo o la categoría están vacíos. Intenta usar "Administrar Campos" (⚙️) para añadir el primer campo.</p>`;
+                return;
+            }
+
+            let formHtml = `
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">${title}</h3>
+                <form id="add-form" class="space-y-4">
+            `;
+
+            for (const key of Object.keys(schema)) {
+                formHtml += generateFormField(key, '', `add-`);
+            }
+            
+            formHtml += `
+                        <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Añadir Item</button>
+                </form>
+            `;
+            
+            formContainer.innerHTML = formHtml;
+            document.getElementById('add-form').onsubmit = handleAddItem;
+        }
+
+        // --- 5. LÓGICA DE ACCIONES (CRUD) ---
+
+        // Generar campos de formulario
+        function generateFormField(key, value, prefix = '') {
+            const id = `${prefix}${key}`;
+            let field = '';
+            const stringValue = (value === null || value === undefined) ? '' : String(value);
+
+            if (key.toLowerCase().includes('description') || stringValue.length > 80) {
+                field = `<textarea id="${id}" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>${stringValue}</textarea>`;
+            } else if (key.toLowerCase().includes('link') || key.toLowerCase().includes('url')) {
+                field = `<input type="url" id="${id}" value="${stringValue}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>`;
+            } else {
+                field = `<input type="text" id="${id}" value="${stringValue}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>`;
+            }
+            
+            return `
+                <div>
+                    <label for="${id}" class="block text-sm font-medium text-gray-700 mb-1">${key.charAt(0).toUpperCase() + key.slice(1)}</label>
+                    ${field}
+                </div>
+            `;
+        }
+
+        // 1. Añadir Item
+        // /* MODIFICADO: Solo cambia el estado local, no guarda */
+        function handleAddItem(e) {
+            e.preventDefault();
+            const items = (appState.dataStructure === 'object-of-arrays')
+                ? appState.data[appState.selectedSubject]
+                : appState.data;
+
+            let schema = null;
+            if (items.length > 0) {
+                schema = items[0];
+            } else if (appState.dataStructure === 'object-of-arrays') {
+                 for(const key in appState.data) {
+                    if (appState.data[key].length > 0) {
+                        schema = appState.data[key][0];
+                        break;
+                    }
+                }
+            }
+
+            if (!schema) {
+                alert("No se puede añadir item: estructura desconocida.");
+                return;
+            }
+
+            const newItem = {};
+            for (const key of Object.keys(schema)) {
+                newItem[key] = document.getElementById(`add-${key}`).value;
+            }
+
+            // /* MODIFICADO: Actualiza appState.data directamente */
+            if (appState.dataStructure === 'object-of-arrays') {
+                appState.data[appState.selectedSubject].push(newItem);
+            } else {
+                appState.data.push(newItem);
+            }
+
+            // /* NUEVO: Marcar como sucio y redibujar */
+            appState.isDirty = true;
+            renderApp(); // Para actualizar el botón de guardar
+            renderEditor(); // Para mostrar el nuevo item en la lista
+            e.target.reset();
+        }
+
+        // 2. Mostrar Modal de Edición
+        function showEditModal(index) {
+            const items = (appState.dataStructure === 'object-of-arrays')
+                ? appState.data[appState.selectedSubject]
+                : appState.data;
+            
+            const item = items[index];
+            appState.editingItem = { index: parseInt(index) };
+            
+            let formHtml = '';
+            for (const [key, value] of Object.entries(item)) {
+                formHtml += generateFormField(key, value, 'edit-');
+            }
+            formHtml += `
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="app.hideEditModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400">Guardar Cambios</button>
+                </div>
+            `;
+
+            document.getElementById('edit-form').innerHTML = formHtml;
+            document.getElementById('edit-form').onsubmit = handleEditItem;
+            document.getElementById('edit-modal-title').textContent = `Editar Item (Índice ${index})`;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function hideEditModal() {
+            appState.editingItem = null;
+            document.getElementById('edit-modal').classList.add('hidden');
+        }
+
+        // 3. Guardar Edición
+        // /* MODIFICADO: Solo cambia el estado local, no guarda */
+        function handleEditItem(e) {
+            e.preventDefault();
+            if (!appState.editingItem) return;
+
+            const { index } = appState.editingItem;
+            
+            const items = (appState.dataStructure === 'object-of-arrays')
+                ? appState.data[appState.selectedSubject]
+                : appState.data;
+            
+            const oldItem = items[index];
+            const updatedItem = {};
+            for (const key of Object.keys(oldItem)) {
+                updatedItem[key] = document.getElementById(`edit-${key}`).value;
+            }
+
+            // /* MODIFICADO: Actualiza appState.data directamente */
+            if (appState.dataStructure === 'object-of-arrays') {
+                appState.data[appState.selectedSubject][index] = updatedItem;
+            } else {
+                appState.data[index] = updatedItem;
+            }
+
+            // /* NUEVO: Marcar como sucio y redibujar */
+            appState.isDirty = true;
+            renderApp(); // Para actualizar el botón de guardar
+            renderEditor(); // Para mostrar el item actualizado
+            hideEditModal();
+        }
+
+        // 4. Mostrar Modal de Eliminación (Ahora usa el modal genérico)
+        function showDeleteConfirmation(index) {
+            appState.editingItem = { index: parseInt(index) };
+            showConfirmModal({
+                title: 'Confirmar Eliminación',
+                message: '¿Estás seguro de que quieres eliminar este item?',
+                note: 'Esto solo se borrará localmente. Presiona "Guardar Cambios" para hacerlo permanente.',
+                confirmText: 'Sí, Eliminar',
+                confirmClass: 'bg-red-600 hover:bg-red-700 focus:ring-red-400',
+                onConfirm: handleDeleteItem
+            });
+        }
+        
+        // 5. Eliminar Item
+        // /* MODIFICADO: Solo cambia el estado local, no guarda */
+        function handleDeleteItem() {
+            if (!appState.editingItem) return;
+            const { index } = appState.editingItem;
+
+            // /* MODIFICADO: Actualiza appState.data directamente */
+            if (appState.dataStructure === 'object-of-arrays') {
+                appState.data[appState.selectedSubject].splice(index, 1);
+            } else {
+                appState.data.splice(index, 1);
+            }
+            
+            // /* NUEVO: Marcar como sucio y redibujar */
+            appState.isDirty = true;
+            appState.editingItem = null; // Limpiar el item a editar
+            renderApp(); // Para actualizar el botón de guardar
+            renderEditor(); // Para mostrar la lista sin el item
+        }
+
+
+        // --- 6. LÓGICA DE GUARDADO EN GITHUB ---
+        
+        // /* NUEVO: Función para guardar TODOS los cambios locales en GitHub */
+        async function saveAllChanges() {
+            // El guardado se hace sobre el estado actual
+            const success = await saveChangesToGitHub(appState.data);
+            
+            if (success) {
+                appState.isDirty = false;
+                renderApp(); // Para deshabilitar el botón de guardar
+                // La alerta de "éxito" ya está en saveChangesToGitHub
+            } else {
+                // El error ya se mostró en el alert de githubApiFetch o saveChangesToGitHub
+                console.error("No se pudieron guardar los cambios.");
+            }
+        }
+        
+        // /* MODIFICADO: Esta función ahora retorna un booleano (success) */
+        async function saveChangesToGitHub(newData) {
+            const commitMessage = `Actualizado ${appState.selectedFile} desde la plataforma de admin`;
+            let newContent = '';
+
+            // Si el archivo original era CSV, lo volvemos a convertir a CSV con PapaParse
+            if (appState.selectedFile.toLowerCase().endsWith('.csv')) {
+                newContent = jsonToCSV(newData);
+            } else {
+            // Si no, lo guardamos como JSON formateado
+                newContent = JSON.stringify(newData, null, 2); // 2 espacios de indentación
+            }
+
+            // Convertir a Base64 (manejando UTF-8)
+            const newContentBase64 = btoa(unescape(encodeURIComponent(newContent)));
+
+            const endpoint = `/repos/${appState.selectedRepo}/contents/${appState.selectedFile}`;
+            const options = {
+                method: 'PUT',
+                body: JSON.stringify({
+                    message: commitMessage,
+                    content: newContentBase64,
+                    sha: appState.currentSha // El SHA es crucial
+                })
+            };
+
+            const result = await githubApiFetch(endpoint, options);
+            
+            if (result && result.content) {
+                appState.currentSha = result.content.sha;
+                appState.data = newData; // Asegurar que los datos locales coincidan
+                renderEditor();
+                alert("¡Cambios guardados en GitHub con éxito!");
+                return true; // /* NUEVO: Retorna éxito */
+            } else if (result === null) {
+                // API de GitHub a veces tarda (204). Recargamos los datos para obtener el nuevo SHA.
+                console.warn("Guardado exitoso (204), recargando SHA.");
+                const fileData = await githubApiFetch(`/repos/${appState.selectedRepo}/contents/${appState.selectedFile}`);
+                if (fileData) {
+                    appState.currentSha = fileData.sha;
+                    appState.data = newData;
+                    renderEditor();
+                    alert("¡Cambios guardados en GitHub con éxito!");
+                    return true; // /* NUEVO: Retorna éxito */
+                }
+            }
+            
+            return false; // /* NUEVO: Retorna fallo si no entró en los if */
+        }
+
+        // --- NUEVA FUNCIONALIDAD: Lógica de "Crear Nuevo Archivo" ---
+        async function createNewFile() {
+            const fileName = document.getElementById('new-file-name').value;
+            if (!fileName || !appState.selectedRepo) {
+                alert("Por favor, introduce un nombre de archivo válido (ej: datos/nuevo.json o .csv).");
+                return;
+            }
+
+            let initialContent = '';
+            if (fileName.toLowerCase().endsWith('.json')) {
+                initialContent = '[]'; // Empezar con un array vacío
+            } else if (fileName.toLowerCase().endsWith('.csv')) {
+                initialContent = 'id,nombre,descripcion'; // Empezar con encabezados
+            } else {
+                alert("El nombre de archivo debe terminar en .json o .csv");
+                return;
+            }
+
+            const commitMessage = `Creado ${fileName} desde la plataforma de admin`;
+            const newContentBase64 = btoa(unescape(encodeURIComponent(initialContent)));
+
+            const endpoint = `/repos/${appState.selectedRepo}/contents/${fileName}`;
+            const options = {
+                method: 'PUT',
+                body: JSON.stringify({
+                    message: commitMessage,
+                    content: newContentBase64
+                    // NO incluimos 'sha' para crear un archivo nuevo
+                })
+            };
+
+            const result = await githubApiFetch(endpoint, options);
+            
+            if (result && result.content) {
+                alert(`¡Archivo "${fileName}" creado con éxito!`);
+                document.getElementById('new-file-name').value = '';
+                handleRepoChange(appState.selectedRepo); // Recargar la lista de archivos
+            } else {
+                alert("Error al crear el archivo. ¿Quizás ya existe?");
+            }
+        }
+
+        // --- NUEVA FUNCIONALIDAD: Lógica de "Administrar Campos" ---
+        function showSchemaModal() {
+            document.getElementById('schema-modal').classList.remove('hidden');
+            document.getElementById('schema-form').onsubmit = handleAddField;
+        }
+
+        function hideSchemaModal() {
+            document.getElementById('schema-modal').classList.add('hidden');
+            document.getElementById('schema-form').reset();
+        }
+
+        // /* MODIFICADO: Solo cambia el estado local, no guarda */
+        function handleAddField(e) {
+            e.preventDefault();
+            const newField = document.getElementById('new-field-name').value;
+            const defaultValue = document.getElementById('new-field-default-value').value;
+
+            if (!newField) {
+                alert("Por favor, introduce un nombre para el nuevo campo.");
+                return;
+            }
+
+            // /* MODIFICADO: Usamos una copia para la mutación */
+            const newData = JSON.parse(JSON.stringify(appState.data));
+
+            // Aplicar a todos los items en todas las categorías
+            if (appState.dataStructure === 'object-of-arrays') {
+                Object.keys(newData).forEach(subject => {
+                    newData[subject].forEach(item => {
+                        if (item[newField] === undefined) {
+                            item[newField] = defaultValue;
+                        }
+                    });
+                });
+            } else { // 'array'
+                newData.forEach(item => {
+                    if (item[newField] === undefined) {
+                        item[newField] = defaultValue;
+                    }
+                });
+            }
+
+            // /* MODIFICADO: Actualiza el estado local y marca como sucio */
+            appState.data = newData;
+            appState.isDirty = true;
+            
+            hideSchemaModal();
+            renderApp(); // Actualiza el botón de guardar
+            renderEditor(); // Actualiza la UI con los nuevos campos
+            alert(`¡Campo "${newField}" añadido localmente! Presiona "Guardar Cambios" para aplicar en GitHub.`);
+        }
+
+
+        // --- LÓGICA DE UTILIDAD ---
+
+        // Convierte link de Google Drive a link de "preview" incrustable
+        function getEmbeddableDriveUrl(url) {
+            if (!url || !url.includes('drive.google.com')) return '';
+            const match = url.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/file/d/${match[1]}/preview`;
+            }
+            return '';
+        }
+
+        // Carga el video en el placeholder al hacer clic
+        function loadVideo(element) {
+            const url = element.dataset.embedUrl;
+            if (url) {
+                element.innerHTML = `
+                    <iframe src="${url}" 
+                        class="w-full h-full border-0" 
+                        allowfullscreen 
+                        allow="autoplay; encrypted-media">
+                    </iframe>
+                `;
+                element.onclick = null;
+                element.classList.remove('cursor-pointer', 'flex', 'items-center', 'justify-center');
+            }
+        }
+
+        // --- NUEVAS FUNCIONES DE CONVERSIÓN (PapaParse) ---
+        
+        /**
+         * Convierte un string CSV a un array de objetos JSON usando PapaParse.
+         */
+        function csvToJSON(csvString) {
+            const result = Papa.parse(csvString, {
+                header: true, // La primera fila es el encabezado
+                skipEmptyLines: true,
+                dynamicTyping: true // Intenta convertir números/booleanos
+            });
+            if (result.errors.length > 0) {
+                console.error("Errores de PapaParse (CSV a JSON):", result.errors);
+                alert(`Error al leer el CSV: ${result.errors[0].message}`);
+            }
+            return result.data;
+        }
+
+        /**
+         * Convierte un array de objetos JSON a un string CSV usando PapaParse.
+         */
+        function jsonToCSV(jsonArray) {
+            if (!jsonArray || jsonArray.length === 0) return '';
+            
+            try {
+                return Papa.unparse(jsonArray);
+            } catch (error) {
+                console.error("Error de PapaParse (JSON a CSV):", error);
+                alert(`Error al convertir a CSV: ${error.message}`);
+                return '';
+            }
+        }
+
+        // --- /* NUEVO: Modal de Confirmación Genérico */ ---
+        /**
+         * Muestra un modal de confirmación genérico.
+         * @param {object} options
+         * @param {string} options.title - Título del modal.
+         * @param {string} options.message - Mensaje principal.
+         * @param {string} [options.note] - Nota opcional (en rojo).
+         * @param {string} options.confirmText - Texto del botón de confirmación.
+         * @param {string} options.confirmClass - Clases de Tailwind para el botón (ej: 'bg-red-600 hover:bg-red-700').
+         * @param {function} options.onConfirm - Callback a ejecutar si se confirma.
+         */
+        function showConfirmModal({ title, message, note, confirmText, confirmClass, onConfirm }) {
+            document.getElementById('confirm-modal-title').textContent = title;
+            document.getElementById('confirm-modal-message').textContent = message;
+            
+            const noteEl = document.getElementById('confirm-modal-note');
+            if (note) {
+                noteEl.textContent = note;
+                noteEl.classList.remove('hidden');
+            } else {
+                noteEl.classList.add('hidden');
+            }
+
+            const acceptBtn = document.getElementById('confirm-modal-accept-btn');
+            acceptBtn.textContent = confirmText;
+            
+            // Resetear clases y aplicar las nuevas
+            acceptBtn.className = 'px-4 py-2 text-white rounded-md shadow-sm focus:outline-none focus:ring-2';
+            acceptBtn.classList.add(...confirmClass.split(' '));
+
+            // Re-vincular el evento para evitar callbacks duplicados
+            const newAcceptBtn = acceptBtn.cloneNode(true);
+            newAcceptBtn.onclick = () => {
+                hideConfirmModal(); // Ocultar primero
+                onConfirm();        // Luego ejecutar
+            };
+            acceptBtn.parentNode.replaceChild(newAcceptBtn, acceptBtn);
+            
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function hideConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        // --- /* NUEVO: Protección para cerrar la pestaña */ ---
+        window.addEventListener('beforeunload', (event) => {
+            if (appState.isDirty) {
+                // Previene que la pestaña se cierre automáticamente
+                event.preventDefault();
+                // Requerido por algunos navegadores
+                event.returnValue = '';
+            }
+        });
+
+        // --- INICIO DE LA APP ---
+        window.app = {
+            handleLogin,
+            logout,
+            goBackToBrowser,
+            handleRepoChange,
+            handleFileChange,
+            loadFileContent,
+            showEditModal,
+            hideEditModal,
+            handleEditItem,
+            showDeleteConfirmation,
+            hideConfirmModal, // MODIFICADO
+            handleDeleteItem,
+            handleAddItem,
+            loadVideo,
+            renderItemsList, // Exponer para la búsqueda
+            createNewFile,
+            showSchemaModal,
+            hideSchemaModal,
+            handleAddField,
+            saveAllChanges // /* NUEVO */
+        };
+
+        // Render inicial
+        renderApp();
+    </script>
+
+</body>
+</html>
